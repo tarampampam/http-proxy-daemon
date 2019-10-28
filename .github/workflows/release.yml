@@ -11,11 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [linux, windows]
+        os: [linux]
         arch: [amd64, 386]
-        include:
-          - os: windows
-            ext: '.exe'
     steps:
       - name: Set up Go
         uses: actions/setup-go@v1
@@ -32,12 +29,12 @@ jobs:
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
-        run: go build -ldflags '-s -w' -o ./../build/app-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }} .
+        run: go build -ldflags '-s -w' -o ./../build/http-proxy-daemon-${{ matrix.os }}-${{ matrix.arch }} .
 
       - name: Pack binary
         uses: docker://gact/upx:latest # https://github.com/marketplace/actions/upx-action
         with:
-          file: "./build/app-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
+          file: "./build/http-proxy-daemon-${{ matrix.os }}-${{ matrix.arch }}"
           upx_args: '-7'
 
       - name: Upload to release
@@ -45,5 +42,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: "./build/app-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
+          file: "./build/http-proxy-daemon-${{ matrix.os }}-${{ matrix.arch }}"
           type: 'application/octet-stream'

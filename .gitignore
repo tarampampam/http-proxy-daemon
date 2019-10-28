@@ -12,5 +12,5 @@
 /src/cover*.*
 /src/*.png
 /src/*.jpg
-/src/app
-/app
+/src/http-proxy-daemon
+/http-proxy-daemon

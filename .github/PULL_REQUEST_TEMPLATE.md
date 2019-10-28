@@ -19,7 +19,7 @@ Fixes # (issue)
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I wrote unit tests for my code _(if this action is required)_
-- [ ] I have made changes in [CHANGELOG.md](https://github.com/tarampampam/golang-repo-template/blob/master/CHANGELOG.md) file
+- [ ] I have made changes in [CHANGELOG.md](https://github.com/tarampampam/http-proxy-daemon/blob/master/CHANGELOG.md) file
 
 <!--
 

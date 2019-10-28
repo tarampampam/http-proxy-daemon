@@ -13,8 +13,6 @@
 
 %application.description.full%
 
-> You should add [`CODECOV_TOKEN` into repository secrets](https://bit.ly/2Wi0bJF).
-
 ## Usage example
 
 %examples.usage.full%
@@ -49,26 +47,24 @@ If you will find any package errors, please, [make an issue][link_create_issue] 
 
 This is open-sourced software licensed under the [MIT License][link_license].
 
-[badge_build]:https://github.com/tarampampam/golang-repo-template/workflows/build/badge.svg
-[badge_coverage]:https://img.shields.io/codecov/c/github/tarampampam/golang-repo-template/master.svg?maxAge=30
-[badge_goreport]:https://goreportcard.com/badge/github.com/tarampampam/golang-repo-template
-[badge_release_version]:https://img.shields.io/github/release/tarampampam/golang-repo-template.svg?maxAge=30
+[badge_build]:https://github.com/tarampampam/http-proxy-daemon/workflows/build/badge.svg
+[badge_coverage]:https://img.shields.io/codecov/c/github/tarampampam/http-proxy-daemon/master.svg?maxAge=30
+[badge_goreport]:https://goreportcard.com/badge/github.com/tarampampam/http-proxy-daemon
+[badge_release_version]:https://img.shields.io/github/release/tarampampam/http-proxy-daemon.svg?maxAge=30
 [badge_language]:https://img.shields.io/badge/language-go_1.13-blue.svg?longCache=true
-[badge_license]:https://img.shields.io/github/license/tarampampam/golang-repo-template.svg?longCache=true
-[badge_release_date]:https://img.shields.io/github/release-date/tarampampam/golang-repo-template.svg?maxAge=180
-[badge_commits_since_release]:https://img.shields.io/github/commits-since/tarampampam/golang-repo-template/latest.svg?maxAge=45
-[badge_issues]:https://img.shields.io/github/issues/tarampampam/golang-repo-template.svg?maxAge=45
-[badge_pulls]:https://img.shields.io/github/issues-pr/tarampampam/golang-repo-template.svg?maxAge=45
-[link_goreport]:https://goreportcard.com/report/github.com/tarampampam/golang-repo-template
+[badge_license]:https://img.shields.io/github/license/tarampampam/http-proxy-daemon.svg?longCache=true
+[badge_release_date]:https://img.shields.io/github/release-date/tarampampam/http-proxy-daemon.svg?maxAge=180
+[badge_commits_since_release]:https://img.shields.io/github/commits-since/tarampampam/http-proxy-daemon/latest.svg?maxAge=45
+[badge_issues]:https://img.shields.io/github/issues/tarampampam/http-proxy-daemon.svg?maxAge=45
+[badge_pulls]:https://img.shields.io/github/issues-pr/tarampampam/http-proxy-daemon.svg?maxAge=45
+[link_goreport]:https://goreportcard.com/report/github.com/tarampampam/http-proxy-daemon
 
-[link_coverage]:https://codecov.io/gh/tarampampam/golang-repo-template
-[link_build]:https://github.com/tarampampam/golang-repo-template/actions
-[link_license]:https://github.com/tarampampam/golang-repo-template/blob/master/LICENSE
-[link_releases]:https://github.com/tarampampam/golang-repo-template/releases
-[link_commits]:https://github.com/tarampampam/golang-repo-template/commits
-[link_changes_log]:https://github.com/tarampampam/golang-repo-template/blob/master/CHANGELOG.md
-[link_issues]:https://github.com/tarampampam/golang-repo-template/issues
-[link_create_issue]:https://github.com/tarampampam/golang-repo-template/issues/new/choose
-[link_pulls]:https://github.com/tarampampam/golang-repo-template/pulls
-
-[tinypng.com]:https://tinypng.com/
+[link_coverage]:https://codecov.io/gh/tarampampam/http-proxy-daemon
+[link_build]:https://github.com/tarampampam/http-proxy-daemon/actions
+[link_license]:https://github.com/tarampampam/http-proxy-daemon/blob/master/LICENSE
+[link_releases]:https://github.com/tarampampam/http-proxy-daemon/releases
+[link_commits]:https://github.com/tarampampam/http-proxy-daemon/commits
+[link_changes_log]:https://github.com/tarampampam/http-proxy-daemon/blob/master/CHANGELOG.md
+[link_issues]:https://github.com/tarampampam/http-proxy-daemon/issues
+[link_create_issue]:https://github.com/tarampampam/http-proxy-daemon/issues/new/choose
+[link_pulls]:https://github.com/tarampampam/http-proxy-daemon/pulls

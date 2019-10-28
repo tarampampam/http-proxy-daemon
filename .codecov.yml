@@ -1,4 +1,4 @@
 #comment: off
 
 fixes: # Docs <https://docs.codecov.io/docs/fixing-paths>
-  - "app/::src/"  # move path   e.g., "before/path" => "after/path"
+  - "http-proxy-daemon/::src/"  # move path   e.g., "before/path" => "after/path"

@@ -14,14 +14,14 @@ WORKDIR /src
 RUN set -x \
     && upx -V \
     && go version \
-    && go build -ldflags='-s -w' -o /tmp/app . \
-    && upx ${upx_params} /tmp/app \
-    && /tmp/app -V \
-    && /tmp/app -h
+    && go build -ldflags='-s -w' -o /tmp/http-proxy-daemon . \
+    && upx ${upx_params} /tmp/http-proxy-daemon \
+    && /tmp/http-proxy-daemon -V \
+    && /tmp/http-proxy-daemon -h
 
 FROM alpine:latest
-LABEL Description="Docker image with app" Vendor="Tarampampam"
+LABEL Description="Docker image with http proxy daemon" Vendor="Tarampampam"
 
-COPY --from=builder /tmp/app /bin/app
+COPY --from=builder /tmp/http-proxy-daemon /bin/http-proxy-daemon
 
-ENTRYPOINT ["/bin/app"]
+ENTRYPOINT ["/bin/http-proxy-daemon"]

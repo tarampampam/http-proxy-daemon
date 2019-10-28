@@ -76,11 +76,11 @@ jobs:
         env:
           GOOS: ${{ matrix.os }}
         working-directory: ./src
-        run: go build -ldflags '-s -w' -o /tmp/app .
+        run: go build -ldflags '-s -w' -o /tmp/http-proxy-daemon .
 
       - name: Try to execute
         if: matrix.os != 'windows'
-        run: /tmp/app -V && /tmp/app -h
+        run: /tmp/http-proxy-daemon -V && /tmp/http-proxy-daemon -h
 
   image:
     name: Build docker image
@@ -93,7 +93,7 @@ jobs:
           fetch-depth: 1
 
       - name: Build image
-        run: docker build -t app -f Dockerfile .
+        run: docker build -t http-proxy-daemon -f Dockerfile .
 
       - name: Try to execute
-        run: docker run --rm app -h
+        run: docker run --rm http-proxy-daemon -h
