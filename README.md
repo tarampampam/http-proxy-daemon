@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://hsto.org/webt/m6/lf/ga/m6lfgah_evfjnit-yex-al-irqo.png" alt="Logo" width="128" />
+  <img src="https://hsto.org/webt/jx/ea/tw/jxeatw6qghfyfzxu2y8cymoiyck.png" alt="Logo" width="128" />
 </p>
 
-# %application.description.short%
+# Http Proxy Daemon
 
 ![Release version][badge_release_version]
 ![Project language][badge_language]
@@ -11,7 +11,7 @@
 [![Go Report][badge_goreport]][link_goreport]
 [![License][badge_license]][link_license]
 
-%application.description.full%
+This application accepts HTTP requests and sending them by itself to the target resource. So, target resource is not hardcoded, and by running this application on remote server you can use it as dynamic reverse-proxy.
 
 ## Usage example
 
