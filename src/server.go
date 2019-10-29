@@ -11,17 +11,30 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
 
+type IServer interface {
+	RegisterHandlers()
+	Start() error
+}
+
 // Proxy server structure.
 type Server struct {
-	server *http.Server
-	router *mux.Router
-	client *http.Client
-	log    *log.Logger
+	server    *http.Server
+	router    *mux.Router
+	client    *http.Client
+	log       *log.Logger
+	counters  ICounter
+	startTime time.Time
 }
+
+const (
+	metricProxiedSuccess = "proxied_success"
+	metricProxiedErrors  = "proxied_errors"
+)
 
 // Server constructor.
 func NewServer(host, port string, log *log.Logger) *Server {
@@ -46,19 +59,25 @@ func NewServer(host, port string, log *log.Logger) *Server {
 				return nil
 			},
 		},
-		log: log,
+		log:      log,
+		counters: NewCounters(nil),
 	}
 }
 
 // Register server http handlers.
 func (s *Server) RegisterHandlers() {
-	s.router.HandleFunc("/proxy/{uri:.*}", s.handleProxyRequest).Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE")
+	s.router.HandleFunc("/", s.indexHandler).Methods("GET")
+	s.router.HandleFunc("/ping", s.pingHandler).Methods("GET")
+	s.router.HandleFunc("/metrics", s.metricsHandler).Methods("GET")
+	s.router.HandleFunc("/proxy/{uri:.*}", s.proxyRequestHandler).Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE")
 	s.router.NotFoundHandler = s.notFoundHandler()
 	s.router.MethodNotAllowedHandler = s.methodNotAllowedHandler()
 }
 
 // Start proxy server.
 func (s *Server) Start() error {
+	s.startTime = time.Now()
+	s.log.Println("Server started and listen on", s.server.Addr)
 	return s.server.ListenAndServe()
 }
 
@@ -84,8 +103,63 @@ func (s *Server) errorHandler(w http.ResponseWriter, error ServerError) {
 	_ = json.NewEncoder(w).Encode(error)
 }
 
+// Index route handler. Show all available routes in a json response.
+func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
+	var templates []string
+	// Walk through all available routes an fill templates slice
+	err := s.router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		if t, err := route.GetPathTemplate(); err == nil {
+			templates = append(templates, t)
+			return nil
+		} else {
+			return err
+		}
+	})
+	// Handle possible error
+	if err != nil {
+		s.errorHandler(w, *NewServerError(http.StatusBadRequest, err.Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	// And print results
+	_ = json.NewEncoder(w).Encode(templates)
+}
+
+// Ping request handler
+func (s *Server) pingHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode("pong")
+}
+
+// Metrics request handler.
+func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
+	res := make(map[string]interface{})
+	// Append metric proxy stats
+	for _, v := range []string{metricProxiedSuccess, metricProxiedErrors} {
+		res[v] = s.counters.Get(v)
+	}
+	// Append uptime in seconds
+	res["uptime_sec"] = int64(time.Since(s.startTime).Seconds())
+	// Append hostname
+	if h, err := os.Hostname(); err == nil {
+		res["hostname"] = h
+	}
+	s.disableCache(w)
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(res)
+	res = nil
+}
+
+// Disable response caching.
+func (Server) disableCache(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+}
+
 // Proxy request handler.
-func (s *Server) handleProxyRequest(w http.ResponseWriter, r *http.Request) {
+func (s *Server) proxyRequestHandler(w http.ResponseWriter, r *http.Request) {
+	s.counters.Increment(metricProxiedErrors) // Increment counter value at starts (decrement it later if all is ok)
 	logMessage := []string{fmt.Sprintf(`[%s %s] - "%s %s"`, r.RemoteAddr, r.UserAgent(), r.Method, r.URL.String())}
 	// Log message should be printed only when handling is completed
 	defer func(entries *[]string) {
@@ -142,6 +216,8 @@ func (s *Server) handleProxyRequest(w http.ResponseWriter, r *http.Request) {
 		s.errorHandler(w, *NewServerError(http.StatusInternalServerError, "Cannot write response:"+writeErr.Error()))
 		return
 	}
+	s.counters.Decrement(metricProxiedErrors) // If all is ok - decrement counter value
+	s.counters.Increment(metricProxiedSuccess)
 }
 
 // Write HTTP request response to the server HTTP response.
@@ -198,6 +274,10 @@ func (Server) buildTargetUri(schema, domainAndPath, params string) string {
 	// Write query params
 	if len(params) != 0 {
 		buf.WriteString("?" + params)
+	}
+	// Cannot be less then..
+	if buf.Len() < 8 {
+		return ""
 	}
 	return buf.String()
 }
