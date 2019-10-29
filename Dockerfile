@@ -24,4 +24,6 @@ LABEL Description="Docker image with http proxy daemon" Vendor="Tarampampam"
 
 COPY --from=builder /tmp/http-proxy-daemon /bin/http-proxy-daemon
 
+EXPOSE 8080
+
 ENTRYPOINT ["/bin/http-proxy-daemon"]
