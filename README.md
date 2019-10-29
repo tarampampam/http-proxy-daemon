@@ -15,7 +15,28 @@ This application accepts HTTP requests and sending them by itself to the target 
 
 ## Usage example
 
-%examples.usage.full%
+```bash
+$ ./http-proxy-daemon -l 0.0.0.0 -p 8080 -x 'make' &
+2019/10/29 20:45:01.825260 Starting server on 0.0.0.0:8080
+
+$ curl -H "foo:bar" --user-agent "fake agent" 'http://127.0.0.1:8080/make/https/httpbin.org/get?foo=bar&bar&baz'
+{
+  "args": {
+    "bar": "", 
+    "baz": "", 
+    "foo": "bar"
+  }, 
+  "headers": {
+    "Accept": "*/*", 
+    "Accept-Encoding": "gzip", 
+    "Foo": "bar", 
+    "Host": "httpbin.org", 
+    "User-Agent": "fake agent"
+  }, 
+  "origin": "85.12.201.88, 85.12.201.88", 
+  "url": "https://httpbin.org/get?foo=bar&bar&baz"
+}
+```
 
 ## Using docker
 

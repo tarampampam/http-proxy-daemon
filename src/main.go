@@ -15,8 +15,9 @@ func main() {
 	options.Parse()
 
 	srv := NewServer(
-		options.CliOptions.Address,
-		options.CliOptions.Port,
+		options.Address,
+		options.Port,
+		options.ProxyPrefix,
 		log.New(os.Stdout, "", log.Ldate|log.Lmicroseconds),
 	)
 

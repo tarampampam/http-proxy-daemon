@@ -24,12 +24,13 @@ type IServer interface {
 
 // Proxy server structure.
 type Server struct {
-	server    *http.Server
-	router    *mux.Router
-	client    *http.Client
-	log       *log.Logger
-	counters  ICounter
-	startTime time.Time
+	server           *http.Server
+	router           *mux.Router
+	client           *http.Client
+	proxyRoutePrefix string
+	log              *log.Logger
+	counters         ICounter
+	startTime        time.Time
 }
 
 const (
@@ -38,7 +39,7 @@ const (
 )
 
 // Server constructor.
-func NewServer(host string, port int, log *log.Logger) *Server {
+func NewServer(host string, port int, proxyPrefix string, log *log.Logger) *Server {
 	var router = *mux.NewRouter()
 	var tr = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // skip ssl errors
@@ -49,7 +50,8 @@ func NewServer(host string, port int, log *log.Logger) *Server {
 			Addr:    host + ":" + strconv.Itoa(port), // TCP address to listen on, ":http" if empty
 			Handler: &router,
 		},
-		router: &router,
+		router:           &router,
+		proxyRoutePrefix: proxyPrefix,
 		client: &http.Client{
 			Transport: tr,
 			Timeout:   time.Second * 30, // Set request timeout
@@ -67,10 +69,15 @@ func NewServer(host string, port int, log *log.Logger) *Server {
 
 // Register server http handlers.
 func (s *Server) RegisterHandlers() {
-	s.router.HandleFunc("/", s.indexHandler).Methods("GET")
-	s.router.HandleFunc("/ping", s.pingHandler).Methods("GET")
-	s.router.HandleFunc("/metrics", s.metricsHandler).Methods("GET")
-	s.router.HandleFunc("/proxy/{uri:.*}", s.proxyRequestHandler).Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE")
+	s.router.HandleFunc("/", s.indexHandler).
+		Methods("GET")
+	s.router.HandleFunc("/ping", s.pingHandler).
+		Methods("GET")
+	s.router.HandleFunc("/metrics", s.metricsHandler).
+		Methods("GET")
+	s.router.HandleFunc("/"+s.proxyRoutePrefix+"/{uri:.*}", s.proxyRequestHandler).
+		Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE")
+
 	s.router.NotFoundHandler = s.notFoundHandler()
 	s.router.MethodNotAllowedHandler = s.methodNotAllowedHandler()
 }
@@ -136,9 +143,8 @@ func (s *Server) pingHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	res := make(map[string]interface{})
 	// Append metric proxy stats
-	for _, v := range []string{metricProxiedSuccess, metricProxiedErrors} {
-		res[v] = s.counters.Get(v)
-	}
+	res["proxied_success"] = s.counters.Get(metricProxiedSuccess)
+	res["proxied_errors"] = s.counters.Get(metricProxiedErrors)
 	// Append uptime in seconds
 	res["uptime_sec"] = int64(time.Since(s.startTime).Seconds())
 	// Append hostname
