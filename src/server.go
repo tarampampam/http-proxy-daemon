@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -37,7 +38,7 @@ const (
 )
 
 // Server constructor.
-func NewServer(host, port string, log *log.Logger) *Server {
+func NewServer(host string, port int, log *log.Logger) *Server {
 	var router = *mux.NewRouter()
 	var tr = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // skip ssl errors
@@ -45,7 +46,7 @@ func NewServer(host, port string, log *log.Logger) *Server {
 
 	return &Server{
 		server: &http.Server{
-			Addr:    host + ":" + port, // TCP address to listen on, ":http" if empty
+			Addr:    host + ":" + strconv.Itoa(port), // TCP address to listen on, ":http" if empty
 			Handler: &router,
 		},
 		router: &router,
@@ -77,7 +78,7 @@ func (s *Server) RegisterHandlers() {
 // Start proxy server.
 func (s *Server) Start() error {
 	s.startTime = time.Now()
-	s.log.Println("Server started and listen on", s.server.Addr)
+	s.log.Println("Starting server on", s.server.Addr)
 	return s.server.ListenAndServe()
 }
 
