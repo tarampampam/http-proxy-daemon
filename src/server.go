@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -28,7 +28,8 @@ type Server struct {
 	router           *mux.Router
 	client           *http.Client
 	proxyRoutePrefix string
-	log              *log.Logger
+	stdLog           *log.Logger
+	errLog           *log.Logger
 	counters         ICounter
 	startTime        time.Time
 }
@@ -39,7 +40,7 @@ const (
 )
 
 // Server constructor.
-func NewServer(host string, port int, proxyPrefix string, log *log.Logger) *Server {
+func NewServer(host string, port int, proxyPrefix string, stdLog, errLog *log.Logger) *Server {
 	var router = *mux.NewRouter()
 	var tr = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // skip ssl errors
@@ -47,8 +48,9 @@ func NewServer(host string, port int, proxyPrefix string, log *log.Logger) *Serv
 
 	return &Server{
 		server: &http.Server{
-			Addr:    host + ":" + strconv.Itoa(port), // TCP address to listen on, ":http" if empty
+			Addr:    host + ":" + strconv.Itoa(port), // TCP address and port to listen on
 			Handler: &router,
+			ErrorLog: errLog,
 		},
 		router:           &router,
 		proxyRoutePrefix: proxyPrefix,
@@ -62,7 +64,7 @@ func NewServer(host string, port int, proxyPrefix string, log *log.Logger) *Serv
 				return nil
 			},
 		},
-		log:      log,
+		stdLog:   stdLog,
 		counters: NewCounters(nil),
 	}
 }
@@ -76,7 +78,7 @@ func (s *Server) RegisterHandlers() {
 	s.router.HandleFunc("/metrics", s.metricsHandler).
 		Methods("GET")
 	s.router.HandleFunc("/"+s.proxyRoutePrefix+"/{uri:.*}", s.proxyRequestHandler).
-		Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE")
+		Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS")
 
 	s.router.NotFoundHandler = s.notFoundHandler()
 	s.router.MethodNotAllowedHandler = s.methodNotAllowedHandler()
@@ -85,8 +87,19 @@ func (s *Server) RegisterHandlers() {
 // Start proxy server.
 func (s *Server) Start() error {
 	s.startTime = time.Now()
-	s.log.Println("Starting server on", s.server.Addr)
+	s.stdLog.Println("Starting server on", s.server.Addr)
 	return s.server.ListenAndServe()
+}
+
+// Stop proxy server.
+func (s *Server) Stop() error {
+	s.stdLog.Println("Stopping server")
+	return s.server.Shutdown(context.Background())
+}
+
+// Set http client response timeout.
+func (s *Server) SetClientResponseTimeout(time time.Duration) {
+	s.client.Timeout = time
 }
 
 // Error handler - 404
@@ -112,12 +125,12 @@ func (s *Server) errorHandler(w http.ResponseWriter, error ServerError) {
 }
 
 // Index route handler. Show all available routes in a json response.
-func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
-	var templates []string
-	// Walk through all available routes an fill templates slice
-	err := s.router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+func (s *Server) indexHandler(w http.ResponseWriter, _ *http.Request) {
+	var routes []string
+	// Walk through all available routes an fill routes slice
+	err := s.router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
 		if t, err := route.GetPathTemplate(); err == nil {
-			templates = append(templates, t)
+			routes = append(routes, t)
 			return nil
 		} else {
 			return err
@@ -130,17 +143,17 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	// And print results
-	_ = json.NewEncoder(w).Encode(templates)
+	_ = json.NewEncoder(w).Encode(routes)
 }
 
 // Ping request handler
-func (s *Server) pingHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) pingHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode("pong")
 }
 
 // Metrics request handler.
-func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	res := make(map[string]interface{})
 	// Append metric proxy stats
 	res["proxied_success"] = s.counters.Get(metricProxiedSuccess)
@@ -151,53 +164,60 @@ func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	if h, err := os.Hostname(); err == nil {
 		res["hostname"] = h
 	}
-	s.disableCache(w)
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(res)
-	res = nil
-}
+	// Append version
+	res["version"] = VERSION
 
-// Disable response caching.
-func (Server) disableCache(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Expires", "0")
+	w.WriteHeader(http.StatusOK)
+
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 // Proxy request handler.
 func (s *Server) proxyRequestHandler(w http.ResponseWriter, r *http.Request) {
-	s.counters.Increment(metricProxiedErrors) // Increment counter value at starts (decrement it later if all is ok)
-	logMessage := []string{fmt.Sprintf(`[%s %s] - "%s %s"`, r.RemoteAddr, r.UserAgent(), r.Method, r.URL.String())}
-	// Log message should be printed only when handling is completed
-	defer func(entries *[]string) {
-		s.log.Println(strings.Join(*entries, " - "))
-	}(&logMessage)
+	// Increment counter value at starts (decrement it later if all is ok)
+	s.counters.Increment(metricProxiedErrors)
+
+	var deferredLogger = NewDeferredLogger(s.stdLog)
+	deferredLogger.Add(fmt.Sprintf(`[%s "%s"] - "%s %s"`, r.RemoteAddr, r.UserAgent(), r.Method, r.URL.String()))
+	defer deferredLogger.Flush(" - ")
+
 	// Make sure that "uri" are presents
 	uri, uriFound := mux.Vars(r)["uri"]
 	if !uriFound {
 		s.errorHandler(w, *NewServerError(http.StatusInternalServerError, "Cannot extract requested path"))
 		return
 	}
+
+	// Extract request schema and path from route
 	var schema, path = s.uriToSchemaAndPath(uri)
 	if len(path) == 0 {
 		s.errorHandler(w, *NewServerError(http.StatusBadRequest, "Empty request path"))
 		return
 	}
+
+	// Build target uri
 	var target = s.buildTargetUri(schema, path, r.URL.RawQuery)
-	logMessage = append(logMessage, fmt.Sprintf("(%s)", target))
+	deferredLogger.Add(fmt.Sprintf("<%s>", target))
+
 	// Create HTTP request
-	hr, reqErr := http.NewRequest(r.Method, target, r.Body)
+	httpRequest, reqErr := http.NewRequest(r.Method, target, nil)
 	if reqErr != nil {
 		s.errorHandler(w, *NewServerError(http.StatusInternalServerError, "Cannot prepare http request: "+reqErr.Error()))
 		return
 	}
+
 	// Proxy all request headers
-	hr.Header = r.Header
+	httpRequest.Header = r.Header.Clone()
+
 	// Make an http request
-	resp, respErr := s.client.Do(hr)
+	resp, respErr := s.client.Do(httpRequest)
+
 	// Check for response error
 	if respErr != nil {
-		logMessage = append(logMessage, fmt.Sprintf(`ERROR "%s"`, respErr.Error()))
+		deferredLogger.Add(fmt.Sprintf(`ERROR "%s"`, respErr.Error()))
 		if e, ok := respErr.(*url.Error); ok {
 			if e.Timeout() {
 				s.errorHandler(w, *NewServerError(http.StatusRequestTimeout, "Request timeout exceeded"))
@@ -207,48 +227,42 @@ func (s *Server) proxyRequestHandler(w http.ResponseWriter, r *http.Request) {
 		s.errorHandler(w, *NewServerError(http.StatusServiceUnavailable, respErr.Error()))
 		return
 	}
+
 	// Check for response
 	if resp == nil {
 		s.errorHandler(w, *NewServerError(http.StatusInternalServerError, "Response not received"))
 		return
 	}
+
+	// Close response body after all
 	defer func(resp *http.Response) {
 		if err := resp.Body.Close(); err != nil {
 			panic(err)
 		}
 	}(resp)
-	logMessage = append(logMessage, fmt.Sprintf(`"HTTP %d"`, resp.StatusCode))
-	// Write request response to the server response
-	if writeErr := s.httpResponseToServerResponse(resp, w, true); writeErr != nil {
-		s.errorHandler(w, *NewServerError(http.StatusInternalServerError, "Cannot write response:"+writeErr.Error()))
-		return
-	}
-	s.counters.Decrement(metricProxiedErrors) // If all is ok - decrement counter value
-	s.counters.Increment(metricProxiedSuccess)
-}
 
-// Write HTTP request response to the server HTTP response.
-func (Server) httpResponseToServerResponse(resp *http.Response, w http.ResponseWriter, addCors bool) error {
-	// Read response content into buffer
-	buf, err := ioutil.ReadAll(resp.Body)
-	// Check for reading error
-	if err != nil {
-		return err
-	}
 	// Write headers
 	for k, v := range resp.Header {
 		w.Header().Set(k, strings.Join(v, ";"))
 	}
-	if addCors == true {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-	}
+
+	// Allow access from anywhere
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	// Write response code
 	w.WriteHeader(resp.StatusCode)
-	// Write response body
-	if _, err := w.Write(buf); err != nil {
-		return err
+
+	// Write content
+	responseLen, copyErr := io.Copy(w, resp.Body)
+	if copyErr != nil {
+		s.errorHandler(w, *NewServerError(http.StatusInternalServerError, "Cannot write response: "+copyErr.Error()))
+		return
 	}
-	return nil
+
+	deferredLogger.Add(fmt.Sprintf(`"HTTP %d (%d bytes)"`, resp.StatusCode, responseLen))
+
+	s.counters.Decrement(metricProxiedErrors) // If all is ok - decrement counter value
+	s.counters.Increment(metricProxiedSuccess)
 }
 
 // Extract schema and path from passed specific uri string.
@@ -268,29 +282,28 @@ func (s *Server) uriToSchemaAndPath(uri string) (string, string) {
 }
 
 // Target uri builder.
-func (Server) buildTargetUri(schema, domainAndPath, params string) string {
-	var buf = bytes.Buffer{}
+func (*Server) buildTargetUri(schema, domainAndPath, params string) (uri string) {
 	// Write schema
 	if len(schema) != 0 {
-		buf.WriteString(schema)
+		uri += schema
 	} else {
-		buf.WriteString("http")
+		uri += "http"
 	}
 	// Write domain and path
-	buf.WriteString("://" + domainAndPath)
+	uri += "://" + domainAndPath
 	// Write query params
 	if len(params) != 0 {
-		buf.WriteString("?" + params)
+		uri += "?" + params
 	}
 	// Cannot be less then..
-	if buf.Len() < 8 {
+	if len(uri) < 8 {
 		return ""
 	}
-	return buf.String()
+	return uri
 }
 
 // Schema validator.
-func (Server) validateHttpSchema(schema string) bool {
+func (*Server) validateHttpSchema(schema string) bool {
 	if l := len(schema); l < 4 || l > 6 {
 		return false // fast check
 	}
