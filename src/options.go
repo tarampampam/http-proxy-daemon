@@ -68,7 +68,7 @@ func (o *Options) Parse() *flags.Parser {
 // Make options check.
 func (o *Options) Check() (bool, error) {
 	// Check prefix
-	if len(strings.TrimSpace(o.ProxyPrefix)) <= 0 || !regexp.MustCompile(`^[a-zA-Z0-9/]+$`).MatchString(o.ProxyPrefix) {
+	if len(strings.TrimSpace(o.ProxyPrefix)) <= 0 || !regexp.MustCompile(`^[a-zA-Z0-9_\-/]+$`).MatchString(o.ProxyPrefix) {
 		return false, errors.New("wrong prefix passed")
 	}
 

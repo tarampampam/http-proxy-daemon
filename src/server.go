@@ -72,13 +72,17 @@ func NewServer(host string, port int, proxyPrefix string, stdLog, errLog *log.Lo
 // Register server http handlers.
 func (s *Server) RegisterHandlers() {
 	s.router.HandleFunc("/", s.indexHandler).
-		Methods("GET")
+		Methods("GET").
+		Name("index")
 	s.router.HandleFunc("/ping", s.pingHandler).
-		Methods("GET")
+		Methods("GET").
+		Name("ping")
 	s.router.HandleFunc("/metrics", s.metricsHandler).
-		Methods("GET")
+		Methods("GET").
+		Name("metrics")
 	s.router.HandleFunc("/"+s.proxyRoutePrefix+"/{uri:.*}", s.proxyRequestHandler).
-		Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS")
+		Methods("GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS").
+		Name("proxy")
 
 	s.router.NotFoundHandler = s.notFoundHandler()
 	s.router.MethodNotAllowedHandler = s.methodNotAllowedHandler()

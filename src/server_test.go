@@ -8,6 +8,8 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -31,6 +33,93 @@ func TestServer_pingHandler(t *testing.T) {
 
 	if expected := `"pong"`; strings.Trim(rr.Body.String(), "\n") != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+}
+
+func TestServer_indexHandler(t *testing.T) {
+	t.Parallel()
+
+	var (
+		testLog = log.New(ioutil.Discard, "", 0)
+		s       = NewServer("", 8080, "foo", testLog, testLog)
+		req, _  = http.NewRequest("GET", "/", nil)
+		rr      = httptest.NewRecorder()
+		routes  []string
+	)
+
+	s.RegisterHandlers()
+
+	_ = s.router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
+		t, err := route.GetPathTemplate()
+		routes = append(routes, t)
+		return err
+	})
+
+	http.HandlerFunc(s.indexHandler).ServeHTTP(rr, req)
+
+	data := make([]string, 0)
+	if err := json.Unmarshal([]byte(rr.Body.String()), &data); err != nil {
+		t.Fatal(err)
+	}
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	if !reflect.DeepEqual(data, routes) {
+		t.Errorf("handler returns wrong response: got %v want %v", data, routes)
+	}
+}
+
+func TestServer_metricsHandler(t *testing.T) {
+	t.Parallel()
+
+	var (
+		testLog                  = log.New(ioutil.Discard, "", 0)
+		s                        = NewServer("", 8080, "", testLog, testLog)
+		req, _                   = http.NewRequest("GET", "/metrics", nil)
+		rr                       = httptest.NewRecorder()
+		wantCode                 = http.StatusOK
+		wantHostname, _          = os.Hostname()
+		wantProxiedErrors  int64 = 555
+		wantProxiedSuccess int64 = 666
+		wantUptimeSec            = 0
+		wantVersion              = VERSION
+	)
+
+	s.counters.Set(metricProxiedErrors, wantProxiedErrors)
+	s.counters.Set(metricProxiedSuccess, wantProxiedSuccess)
+	s.startTime = time.Now()
+
+	http.HandlerFunc(s.metricsHandler).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != wantCode {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, wantCode)
+	}
+
+	data := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(rr.Body.String()), &data); err != nil {
+		t.Fatal(err)
+	}
+
+	if hostname, _ := data["hostname"].(string); hostname != wantHostname {
+		t.Errorf("unexpected hostname: got %v want %v", hostname, wantHostname)
+	}
+
+	if count := int64(math.Round(data["proxied_errors"].(float64))); count != wantProxiedErrors {
+		t.Errorf("unexpected errors count: got %v want %v", count, wantProxiedErrors)
+	}
+
+	if count := int64(math.Round(data["proxied_success"].(float64))); count != wantProxiedSuccess {
+		t.Errorf("unexpected successes count: got %v want %v", count, wantProxiedSuccess)
+	}
+
+	if count := int(math.Round(data["uptime_sec"].(float64))); count != wantUptimeSec {
+		t.Errorf("unexpected uptime: got %v want %v", count, wantUptimeSec)
+	}
+
+	if ver, _ := data["version"].(string); ver != wantVersion {
+		t.Errorf("unexpected version: got %v want %v", ver, wantVersion)
 	}
 }
 
@@ -269,10 +358,12 @@ func TestServer_proxyRequestHandlerErrors(t *testing.T) {
 			t.Parallel()
 
 			var (
-				testLog = log.New(ioutil.Discard, "", 0)
-				s       = NewServer("", 8080, "", testLog, testLog)
-				req, _  = http.NewRequest("GET", "", nil)
-				rr      = httptest.NewRecorder()
+				testLog                      = log.New(ioutil.Discard, "", 0)
+				s                            = NewServer("", 8080, "", testLog, testLog)
+				req, _                       = http.NewRequest("GET", "", nil)
+				rr                           = httptest.NewRecorder()
+				wantContentTypeHeader        = "application/json"
+				wantContentTypeOptionsHeader = "nosniff"
 			)
 
 			if testCase.runBefore != nil {
@@ -280,6 +371,18 @@ func TestServer_proxyRequestHandlerErrors(t *testing.T) {
 			}
 
 			http.HandlerFunc(s.proxyRequestHandler).ServeHTTP(rr, req)
+
+			if value := rr.Header().Get("Content-Type"); value != wantContentTypeHeader {
+				t.Errorf(
+					"Response has wrong Content-Type header: got %v, want %v", value, wantContentTypeHeader,
+				)
+			}
+
+			if value := rr.Header().Get("X-Content-Type-Options"); value != wantContentTypeOptionsHeader {
+				t.Errorf(
+					"Response has wrong X-Content-Type-Options header: got %v, want %v", value, wantContentTypeOptionsHeader,
+				)
+			}
 
 			if status := rr.Code; status != testCase.wantCode {
 				t.Errorf("handler returned wrong status code: got %v want %v", status, testCase.wantCode)
@@ -289,6 +392,99 @@ func TestServer_proxyRequestHandlerErrors(t *testing.T) {
 				t.Errorf("not found expected substring [%v] in response [%v]", testCase.wantContent, rr.Body.String())
 			}
 		})
+	}
+}
+
+func TestServer_RegisterHandlers(t *testing.T) {
+	t.Parallel()
+
+	compareHandlers := func(h1, h2 interface{}) bool {
+		t.Helper()
+		return reflect.ValueOf(h1).Pointer() == reflect.ValueOf(h2).Pointer()
+	}
+
+	var (
+		testLog = log.New(ioutil.Discard, "", 0)
+		s       = NewServer("", 8080, "proxy", testLog, testLog)
+	)
+
+	var cases = []struct {
+		name    string
+		route   string
+		methods []string
+		handler func(http.ResponseWriter, *http.Request)
+	}{
+		{
+			name:    "index",
+			route:   "/",
+			methods: []string{"GET"},
+			handler: s.indexHandler,
+		},
+		{
+			name:    "ping",
+			route:   "/ping",
+			methods: []string{"GET"},
+			handler: s.pingHandler,
+		},
+		{
+			name:    "metrics",
+			route:   "/metrics",
+			methods: []string{"GET"},
+			handler: s.metricsHandler,
+		},
+		{
+			name:    "proxy",
+			route:   "/proxy/{uri:.*}",
+			methods: []string{"GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS"},
+			handler: s.proxyRequestHandler,
+		},
+	}
+
+	for _, testCase := range cases {
+		if s.router.Get(testCase.name) != nil {
+			t.Errorf("Handler for route [%s] must be not registered before RegisterHandlers() calling", testCase.name)
+		}
+	}
+
+	s.RegisterHandlers()
+
+	for _, testCase := range cases {
+		if route, _ := s.router.Get(testCase.name).GetPathTemplate(); route != testCase.route {
+			t.Errorf("wrong route for [%s] route: want %v, got %v", testCase.name, testCase.route, route)
+		}
+		if methods, _ := s.router.Get(testCase.name).GetMethods(); !reflect.DeepEqual(methods, testCase.methods) {
+			t.Errorf("wrong method(s) for [%s] route: want %v, got %v", testCase.name, testCase.methods, methods)
+		}
+		if !compareHandlers(testCase.handler, s.router.Get(testCase.name).GetHandler()) {
+			t.Errorf("wrong handler for [%s] route", testCase.name)
+		}
+	}
+
+	if !compareHandlers(s.router.NotFoundHandler, s.notFoundHandler()) {
+		t.Error("Wrong NotFound handler")
+	}
+
+	if !compareHandlers(s.router.MethodNotAllowedHandler, s.methodNotAllowedHandler()) {
+		t.Error("Wrong NotFound handler")
+	}
+}
+
+func TestServer_SetClientResponseTimeout(t *testing.T) {
+	t.Parallel()
+
+	var (
+		testLog = log.New(ioutil.Discard, "", 0)
+		s       = NewServer("", 8080, "proxy", testLog, testLog)
+	)
+
+	if s.client.Timeout != time.Second*30 {
+		t.Error("Unexpected default timeout")
+	}
+
+	s.SetClientResponseTimeout(time.Hour)
+
+	if s.client.Timeout != time.Hour {
+		t.Error("Unexpected new timeout")
 	}
 }
 
