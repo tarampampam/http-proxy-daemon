@@ -48,8 +48,8 @@ func NewServer(host string, port int, proxyPrefix string, stdLog, errLog *log.Lo
 
 	return &Server{
 		server: &http.Server{
-			Addr:    host + ":" + strconv.Itoa(port), // TCP address and port to listen on
-			Handler: &router,
+			Addr:     host + ":" + strconv.Itoa(port), // TCP address and port to listen on
+			Handler:  &router,
 			ErrorLog: errLog,
 		},
 		router:           &router,

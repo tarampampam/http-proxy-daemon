@@ -187,6 +187,7 @@ func TestServer_proxyRequestHandler(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
+
 			var (
 				testLog = log.New(ioutil.Discard, "", 0)
 				s       = NewServer("", 8080, "", testLog, testLog)
@@ -210,100 +211,84 @@ func TestServer_proxyRequestHandler(t *testing.T) {
 	}
 }
 
-func TestServer_proxyRequestHandlerWithoutUriInit(t *testing.T) {
+func TestServer_proxyRequestHandlerErrors(t *testing.T) {
 	t.Parallel()
 
-	var (
-		testLog     = log.New(ioutil.Discard, "", 0)
-		s           = NewServer("", 8080, "", testLog, testLog)
-		req, _      = http.NewRequest("GET", "https/httpbin.org/anything", nil)
-		rr          = httptest.NewRecorder()
-		wantCode    = http.StatusInternalServerError
-		wantContent = "Cannot extract requested path"
-	)
+	type BeforeExecution func(s *Server, r *http.Request) (*Server, *http.Request)
 
-	http.HandlerFunc(s.proxyRequestHandler).ServeHTTP(rr, req)
-
-	if status := rr.Code; status != wantCode {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, wantCode)
+	var cases = []struct {
+		name        string
+		method      string
+		uri         string
+		runBefore   BeforeExecution
+		wantCode    int
+		wantContent string
+	}{
+		{
+			name:        "Without URI (mux) inited",
+			method:      "GET",
+			runBefore:   nil,
+			wantCode:    http.StatusInternalServerError,
+			wantContent: "Cannot extract requested path",
+		},
+		{
+			name:   "With empty request path",
+			method: "GET",
+			runBefore: func(s *Server, req *http.Request) (*Server, *http.Request) {
+				req = mux.SetURLVars(req, map[string]string{"uri": ""})
+				return s, req
+			},
+			wantCode:    http.StatusBadRequest,
+			wantContent: "Empty request path",
+		},
+		{
+			name:   "With response timeout",
+			method: "GET",
+			runBefore: func(s *Server, req *http.Request) (*Server, *http.Request) {
+				req = mux.SetURLVars(req, map[string]string{"uri": "https/httpbin.org/delay/2"})
+				s.SetClientResponseTimeout(time.Millisecond * 50)
+				return s, req
+			},
+			wantCode:    http.StatusRequestTimeout,
+			wantContent: "Request timeout exceeded",
+		},
+		{
+			name:   "With wrong hostname",
+			method: "GET",
+			runBefore: func(s *Server, req *http.Request) (*Server, *http.Request) {
+				req = mux.SetURLVars(req, map[string]string{"uri": "https/foo.invalid"})
+				return s, req
+			},
+			wantCode:    http.StatusServiceUnavailable,
+			wantContent: "dial tcp: lookup foo.invalid",
+		},
 	}
 
-	if !strings.Contains(rr.Body.String(), wantContent) {
-		t.Errorf("not found expected substring [%v] in response [%v]", wantContent, rr.Body.String())
-	}
-}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 
-func TestServer_proxyRequestHandlerWithEmptyRequestPath(t *testing.T) {
-	t.Parallel()
+			var (
+				testLog = log.New(ioutil.Discard, "", 0)
+				s       = NewServer("", 8080, "", testLog, testLog)
+				req, _  = http.NewRequest("GET", "", nil)
+				rr      = httptest.NewRecorder()
+			)
 
-	var (
-		testLog     = log.New(ioutil.Discard, "", 0)
-		s           = NewServer("", 8080, "", testLog, testLog)
-		req, _      = http.NewRequest("GET", "", nil)
-		rr          = httptest.NewRecorder()
-		wantCode    = http.StatusBadRequest
-		wantContent = "Empty request path"
-	)
+			if testCase.runBefore != nil {
+				s, req = testCase.runBefore(s, req)
+			}
 
-	req = mux.SetURLVars(req, map[string]string{"uri": ""})
-	http.HandlerFunc(s.proxyRequestHandler).ServeHTTP(rr, req)
+			http.HandlerFunc(s.proxyRequestHandler).ServeHTTP(rr, req)
 
-	if status := rr.Code; status != wantCode {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, wantCode)
-	}
+			if status := rr.Code; status != testCase.wantCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, testCase.wantCode)
+			}
 
-	if !strings.Contains(rr.Body.String(), wantContent) {
-		t.Errorf("not found expected substring [%v] in response [%v]", wantContent, rr.Body.String())
-	}
-}
-
-func TestServer_proxyRequestHandlerWithResponseTimeout(t *testing.T) {
-	t.Parallel()
-
-	var (
-		testLog     = log.New(ioutil.Discard, "", 0)
-		s           = NewServer("", 8080, "", testLog, testLog)
-		req, _      = http.NewRequest("GET", "https/httpbin.org/delay/2", nil)
-		rr          = httptest.NewRecorder()
-		wantCode    = http.StatusRequestTimeout
-		wantContent = "Request timeout exceeded"
-	)
-
-	s.SetClientResponseTimeout(time.Millisecond * 50)
-
-	req = mux.SetURLVars(req, map[string]string{"uri": "https/httpbin.org/delay/2"})
-	http.HandlerFunc(s.proxyRequestHandler).ServeHTTP(rr, req)
-
-	if status := rr.Code; status != wantCode {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, wantCode)
-	}
-
-	if !strings.Contains(rr.Body.String(), wantContent) {
-		t.Errorf("not found expected substring [%v] in response [%v]", wantContent, rr.Body.String())
-	}
-}
-
-func TestServer_proxyRequestHandlerWithWrongHostname(t *testing.T) {
-	t.Parallel()
-
-	var (
-		testLog     = log.New(ioutil.Discard, "", 0)
-		s           = NewServer("", 8080, "", testLog, testLog)
-		req, _      = http.NewRequest("GET", "https/foo.invalid", nil)
-		rr          = httptest.NewRecorder()
-		wantCode    = http.StatusServiceUnavailable
-		wantContent = "no such host"
-	)
-
-	req = mux.SetURLVars(req, map[string]string{"uri": "https/foo.invalid"})
-	http.HandlerFunc(s.proxyRequestHandler).ServeHTTP(rr, req)
-
-	if status := rr.Code; status != wantCode {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, wantCode)
-	}
-
-	if !strings.Contains(rr.Body.String(), wantContent) {
-		t.Errorf("not found expected substring [%v] in response [%v]", wantContent, rr.Body.String())
+			if !strings.Contains(rr.Body.String(), testCase.wantContent) {
+				t.Errorf("not found expected substring [%v] in response [%v]", testCase.wantContent, rr.Body.String())
+			}
+		})
 	}
 }
 
