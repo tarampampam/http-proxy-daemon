@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/jessevdk/go-flags"
-	"io"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -14,23 +14,23 @@ type Options struct {
 	Port        int    `short:"p" long:"port" env:"LISTEN_PORT" default:"8080" description:"TCP port number"`
 	ProxyPrefix string `short:"x" long:"prefix" env:"PROXY_PREFIX" default:"proxy" description:"Proxy route prefix"`
 	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
-	stdOut      io.Writer
-	stdErr      io.Writer
+	stdLog      *log.Logger
+	errLog      *log.Logger
 	onExit      OptionsExitFunc
 }
 
 type OptionsExitFunc func(code int)
 
 // Create new options instance.
-func NewOptions(stdOut, stdErr io.Writer, onExit OptionsExitFunc) *Options {
+func NewOptions(stdOut, stdErr *log.Logger, onExit OptionsExitFunc) *Options {
 	if onExit == nil {
 		onExit = func(code int) {
 			os.Exit(code)
 		}
 	}
 	return &Options{
-		stdOut: stdOut,
-		stdErr: stdErr,
+		stdLog: stdOut,
+		errLog: stdErr,
 		onExit: onExit,
 	}
 }
@@ -52,13 +52,13 @@ func (o *Options) Parse() *flags.Parser {
 
 	// Show application version and exit, if flag `-V` passed
 	if o.ShowVersion == true {
-		_, _ = o.stdOut.Write([]byte("Version: " + VERSION + "\n"))
+		o.stdLog.Println("Version: " + VERSION)
 		o.onExit(0)
 	}
 
 	// Make options check
 	if _, err := o.Check(); err != nil {
-		_, _ = o.stdErr.Write([]byte(err.Error() + "\n"))
+		o.errLog.Println(err.Error())
 		o.onExit(1)
 	}
 
@@ -68,16 +68,19 @@ func (o *Options) Parse() *flags.Parser {
 // Make options check.
 func (o *Options) Check() (bool, error) {
 	// Check prefix
-	if len(strings.TrimSpace(o.ProxyPrefix)) <= 0 || !regexp.MustCompile(`^[a-zA-Z0-9/]+$`).MatchString(o.ProxyPrefix) {
+	if len(strings.TrimSpace(o.ProxyPrefix)) <= 0 || !regexp.MustCompile(`^[a-zA-Z0-9_\-/]+$`).MatchString(o.ProxyPrefix) {
 		return false, errors.New("wrong prefix passed")
 	}
-	// Check API key
+
+	// Check address
 	if len(strings.TrimSpace(o.Address)) < 7 {
 		return false, errors.New("wrong address to listen on")
 	}
+
 	// Check port
 	if o.Port <= 0 || o.Port > 65535 {
 		return false, errors.New("wrong port number")
 	}
+
 	return true, nil
 }
