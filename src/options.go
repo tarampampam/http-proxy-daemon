@@ -19,6 +19,7 @@ type Options struct {
 	stdLog      *log.Logger
 	errLog      *log.Logger
 	onExit      OptionsExitFunc
+	parseFlags  flags.Options
 }
 
 type OptionsExitFunc func(code int)
@@ -31,15 +32,16 @@ func NewOptions(stdOut, stdErr *log.Logger, onExit OptionsExitFunc) *Options {
 		}
 	}
 	return &Options{
-		stdLog: stdOut,
-		errLog: stdErr,
-		onExit: onExit,
+		stdLog:     stdOut,
+		errLog:     stdErr,
+		onExit:     onExit,
+		parseFlags: flags.Default,
 	}
 }
 
 // Parse options using fresh parser instance.
 func (o *Options) Parse() *flags.Parser {
-	var parser = flags.NewParser(o, flags.Default)
+	var parser = flags.NewParser(o, o.parseFlags)
 	var _, err = parser.Parse()
 
 	// Parse passed options
@@ -47,7 +49,7 @@ func (o *Options) Parse() *flags.Parser {
 		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
 			o.onExit(0)
 		} else {
-			parser.WriteHelp(os.Stdout)
+			parser.WriteHelp(o.stdLog.Writer())
 			o.onExit(1)
 		}
 	}
