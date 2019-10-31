@@ -13,6 +13,8 @@ type Options struct {
 	Address     string `short:"l" long:"listen" env:"LISTEN_ADDR" default:"0.0.0.0" description:"Address (IP) to listen on"`
 	Port        int    `short:"p" long:"port" env:"LISTEN_PORT" default:"8080" description:"TCP port number"`
 	ProxyPrefix string `short:"x" long:"prefix" env:"PROXY_PREFIX" default:"proxy" description:"Proxy route prefix"`
+	TslCertFile string `long:"tsl-cert" env:"TSL_CERT" description:"TSL certificate file path"`
+	TslKeyFile  string `long:"tsl-key" env:"TSL_KEY" description:"TSL key file path"`
 	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
 	stdLog      *log.Logger
 	errLog      *log.Logger
@@ -80,6 +82,20 @@ func (o *Options) Check() (bool, error) {
 	// Check port
 	if o.Port <= 0 || o.Port > 65535 {
 		return false, errors.New("wrong port number")
+	}
+
+	// Check TSL cert file path
+	if o.TslCertFile != "" {
+		if info, err := os.Stat(o.TslCertFile); err != nil || !info.Mode().IsRegular() {
+			return false, errors.New("wrong TSL certificate file path")
+		}
+	}
+
+	// Check TSL key file path
+	if o.TslKeyFile != "" {
+		if info, err := os.Stat(o.TslKeyFile); err != nil || !info.Mode().IsRegular() {
+			return false, errors.New("wrong TSL key file path")
+		}
 	}
 
 	return true, nil

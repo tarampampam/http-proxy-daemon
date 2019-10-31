@@ -43,7 +43,15 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		if err := srv.Start(); err != nil {
+		var err error
+
+		if options.TslCertFile != "" && options.TslKeyFile != "" {
+			err = srv.StartSSL(options.TslCertFile, options.TslKeyFile)
+		} else {
+			err = srv.Start()
+		}
+
+		if err != nil {
 			errLog.Println(err.Error())
 			os.Exit(1)
 		}

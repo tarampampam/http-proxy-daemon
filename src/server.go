@@ -95,6 +95,13 @@ func (s *Server) Start() error {
 	return s.server.ListenAndServe()
 }
 
+// Start TSL proxy server.
+func (s *Server) StartSSL(certFile, keyFile string) error {
+	s.startTime = time.Now()
+	s.stdLog.Println("Starting TSL server on", s.server.Addr)
+	return s.server.ListenAndServeTLS(certFile, keyFile)
+}
+
 // Stop proxy server.
 func (s *Server) Stop() error {
 	s.stdLog.Println("Stopping server")
