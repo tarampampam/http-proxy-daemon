@@ -26,14 +26,15 @@ type IServer interface {
 
 // Proxy server structure.
 type Server struct {
-	server           *http.Server
-	router           *mux.Router
-	client           *http.Client
-	proxyRoutePrefix string
-	stdLog           *log.Logger
-	errLog           *log.Logger
-	counters         ICounter
-	startTime        time.Time
+	server            *http.Server
+	router            *mux.Router
+	client            *http.Client
+	proxyRoutePrefix  string
+	stdLog            *log.Logger
+	errLog            *log.Logger
+	counters          ICounter
+	startTime         time.Time
+	originStdLogFlags int
 }
 
 const (
@@ -90,23 +91,30 @@ func (s *Server) RegisterHandlers() {
 	s.router.MethodNotAllowedHandler = s.methodNotAllowedHandler()
 }
 
+// Execute some actions before server starting
+func (s *Server) beforeStart(logMessage string) {
+	s.startTime = time.Now()
+	s.originStdLogFlags = s.stdLog.Flags()
+	s.stdLog.SetFlags(log.Ldate | log.Lmicroseconds)
+	s.stdLog.Println(logMessage)
+}
+
 // Start proxy server.
 func (s *Server) Start() error {
-	s.startTime = time.Now()
-	s.stdLog.Println("Starting server on", s.server.Addr)
+	s.beforeStart("Starting server on " + s.server.Addr)
 	return s.server.ListenAndServe()
 }
 
 // Start TSL proxy server.
 func (s *Server) StartSSL(certFile, keyFile string) error {
-	s.startTime = time.Now()
-	s.stdLog.Println("Starting TSL server on", s.server.Addr)
+	s.beforeStart("Starting TSL server on " + s.server.Addr)
 	return s.server.ListenAndServeTLS(certFile, keyFile)
 }
 
 // Stop proxy server.
 func (s *Server) Stop() error {
 	s.stdLog.Println("Stopping server")
+	s.stdLog.SetFlags(s.originStdLogFlags)
 	return s.server.Shutdown(context.Background())
 }
 
