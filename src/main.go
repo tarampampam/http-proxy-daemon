@@ -11,7 +11,7 @@ const VERSION = "0.0.1" // Do not forget update this value before new version re
 
 func main() {
 	var (
-		stdLog = log.New(os.Stdout, "", log.Ldate|log.Lmicroseconds)
+		stdLog = log.New(os.Stderr, "", log.Ldate|log.Lmicroseconds)
 		errLog = log.New(os.Stderr, "", log.LstdFlags)
 	)
 
@@ -43,7 +43,15 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		if err := srv.Start(); err != nil {
+		var err error
+
+		if options.TslCertFile != "" && options.TslKeyFile != "" {
+			err = srv.StartSSL(options.TslCertFile, options.TslKeyFile)
+		} else {
+			err = srv.Start()
+		}
+
+		if err != nil {
 			errLog.Println(err.Error())
 			os.Exit(1)
 		}

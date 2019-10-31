@@ -12,8 +12,7 @@ type DeferredLogger struct {
 
 func NewDeferredLogger(log *log.Logger) *DeferredLogger {
 	return &DeferredLogger{
-		log:   log,
-		stack: make([]string, 0),
+		log: log,
 	}
 }
 

@@ -20,6 +20,8 @@ import (
 type IServer interface {
 	RegisterHandlers()
 	Start() error
+	Stop() error
+	SetClientResponseTimeout(time time.Duration)
 }
 
 // Proxy server structure.
@@ -93,6 +95,13 @@ func (s *Server) Start() error {
 	s.startTime = time.Now()
 	s.stdLog.Println("Starting server on", s.server.Addr)
 	return s.server.ListenAndServe()
+}
+
+// Start TSL proxy server.
+func (s *Server) StartSSL(certFile, keyFile string) error {
+	s.startTime = time.Now()
+	s.stdLog.Println("Starting TSL server on", s.server.Addr)
+	return s.server.ListenAndServeTLS(certFile, keyFile)
 }
 
 // Stop proxy server.
