@@ -9,6 +9,7 @@
 [![Build Status][badge_build]][link_build]
 [![Coverage][badge_coverage]][link_coverage]
 [![Go Report][badge_goreport]][link_goreport]
+[![Docker Build][badge_docker_build]][link_docker_hub]
 [![License][badge_license]][link_license]
 
 This application accepts HTTP requests and sending them by itself to the target resource. So, target resource is not hardcoded, and by running this application on remote server you can use it as dynamic reverse-proxy:
@@ -101,6 +102,7 @@ This is open-sourced software licensed under the [MIT License][link_license].
 [badge_coverage]:https://img.shields.io/codecov/c/github/tarampampam/http-proxy-daemon/master.svg?maxAge=30
 [badge_goreport]:https://goreportcard.com/badge/github.com/tarampampam/http-proxy-daemon
 [badge_release_version]:https://img.shields.io/github/release/tarampampam/http-proxy-daemon.svg?maxAge=30
+[badge_docker_build]:https://img.shields.io/docker/build/tarampampam/http-proxy-daemon.svg?maxAge=30
 [badge_language]:https://img.shields.io/badge/language-go_1.13-blue.svg?longCache=true
 [badge_license]:https://img.shields.io/github/license/tarampampam/http-proxy-daemon.svg?longCache=true
 [badge_release_date]:https://img.shields.io/github/release-date/tarampampam/http-proxy-daemon.svg?maxAge=180
@@ -111,6 +113,7 @@ This is open-sourced software licensed under the [MIT License][link_license].
 
 [link_coverage]:https://codecov.io/gh/tarampampam/http-proxy-daemon
 [link_build]:https://github.com/tarampampam/http-proxy-daemon/actions
+[link_docker_hub]:https://hub.docker.com/r/tarampampam/http-proxy-daemon/
 [link_license]:https://github.com/tarampampam/http-proxy-daemon/blob/master/LICENSE
 [link_releases]:https://github.com/tarampampam/http-proxy-daemon/releases
 [link_commits]:https://github.com/tarampampam/http-proxy-daemon/commits
