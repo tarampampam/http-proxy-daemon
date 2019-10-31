@@ -20,6 +20,8 @@ import (
 type IServer interface {
 	RegisterHandlers()
 	Start() error
+	Stop() error
+	SetClientResponseTimeout(time time.Duration)
 }
 
 // Proxy server structure.

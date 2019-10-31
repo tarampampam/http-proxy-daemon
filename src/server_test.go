@@ -525,15 +525,19 @@ func TestServer_validateHttpSchema(t *testing.T) {
 		},
 	}
 
-	var (
-		testLog = log.New(ioutil.Discard, "", 0)
-		s       = NewServer("", 8080, "", testLog, testLog)
-	)
-
 	for _, testCase := range cases {
-		if s.validateHttpSchema(testCase.give) != testCase.want {
-			t.Errorf("For [%s] must returns %+v", testCase.give, testCase.want)
-		}
+		t.Run("Test with "+testCase.give, func(t *testing.T) {
+			t.Parallel()
+
+			var (
+				testLog = log.New(ioutil.Discard, "", 0)
+				s       = NewServer("", 8080, "", testLog, testLog)
+			)
+
+			if s.validateHttpSchema(testCase.give) != testCase.want {
+				t.Errorf("For [%s] must returns %+v", testCase.give, testCase.want)
+			}
+		})
 	}
 }
 
@@ -638,21 +642,26 @@ func TestServer_uriToSchemaAndPath(t *testing.T) {
 		},
 	}
 
-	var (
-		testLog = log.New(ioutil.Discard, "", 0)
-		s       = NewServer("", 8080, "", testLog, testLog)
-	)
-
 	for _, testCase := range cases {
-		gotSchema, gotPath := s.uriToSchemaAndPath(testCase.uri)
-		if gotSchema != testCase.wantSchema || gotPath != testCase.wantPath {
-			t.Errorf(
-				"For [%s] must returns schema [%s] and path [%s], but returns [%s, %s]",
-				testCase.uri,
-				testCase.wantSchema,
-				testCase.wantPath,
-				gotSchema, gotPath,
+
+		t.Run("Test with "+testCase.uri, func(t *testing.T) {
+			t.Parallel()
+
+			var (
+				testLog = log.New(ioutil.Discard, "", 0)
+				s       = NewServer("", 8080, "", testLog, testLog)
 			)
-		}
+
+			gotSchema, gotPath := s.uriToSchemaAndPath(testCase.uri)
+			if gotSchema != testCase.wantSchema || gotPath != testCase.wantPath {
+				t.Errorf(
+					"For [%s] must returns schema [%s] and path [%s], but returns [%s, %s]",
+					testCase.uri,
+					testCase.wantSchema,
+					testCase.wantPath,
+					gotSchema, gotPath,
+				)
+			}
+		})
 	}
 }
