@@ -27,6 +27,7 @@ LABEL \
     org.label-schema.url="https://github.com/tarampampam/http-proxy-daemon" \
     org.label-schema.vcs-url="https://github.com/tarampampam/http-proxy-daemon" \
     org.label-schema.vendor="Tarampampam" \
+    org.label-schema.license="MIT" \
     org.label-schema.schema-version="1.0"
 
 COPY --from=builder /tmp/http-proxy-daemon /bin/http-proxy-daemon
