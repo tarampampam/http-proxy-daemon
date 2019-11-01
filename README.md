@@ -102,7 +102,7 @@ This is open-sourced software licensed under the [MIT License][link_license].
 [badge_coverage]:https://img.shields.io/codecov/c/github/tarampampam/http-proxy-daemon/master.svg?maxAge=30
 [badge_goreport]:https://goreportcard.com/badge/github.com/tarampampam/http-proxy-daemon
 [badge_release_version]:https://img.shields.io/github/release/tarampampam/http-proxy-daemon.svg?maxAge=30
-[badge_docker_build]:https://img.shields.io/docker/build/tarampampam/http-proxy-daemon.svg?maxAge=30&label=docker
+[badge_docker_build]:https://img.shields.io/docker/cloud/build/tarampampam/http-proxy-daemon?maxAge=30&label=docker
 [badge_language]:https://img.shields.io/badge/language-go_1.13-blue.svg?longCache=true
 [badge_license]:https://img.shields.io/github/license/tarampampam/http-proxy-daemon.svg?longCache=true
 [badge_release_date]:https://img.shields.io/github/release-date/tarampampam/http-proxy-daemon.svg?maxAge=180
