@@ -96,6 +96,7 @@ func (s *Server) beforeStart(logMessage string) {
 	s.startTime = time.Now()
 	s.originStdLogFlags = s.stdLog.Flags()
 	s.stdLog.SetFlags(log.Ldate | log.Lmicroseconds)
+	s.server.SetKeepAlivesEnabled(false) // Disable keep alive
 	s.stdLog.Println(logMessage)
 }
 

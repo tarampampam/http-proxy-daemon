@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog][keepachangelog] and this project adher
 
 - Fatal bug with concurrent memory access
 
+### Changed
+
+- Keep alive disabled
+
 ## v0.0.2
 
 ### Changed
