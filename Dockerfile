@@ -20,7 +20,14 @@ RUN set -x \
     && /tmp/http-proxy-daemon -h
 
 FROM alpine:latest
-LABEL Description="Docker image with http proxy daemon" Vendor="Tarampampam"
+
+LABEL \
+    org.label-schema.name="http-proxy-daemon" \
+    org.label-schema.description="Docker image with http proxy daemon" \
+    org.label-schema.url="https://github.com/tarampampam/http-proxy-daemon" \
+    org.label-schema.vcs-url="https://github.com/tarampampam/http-proxy-daemon" \
+    org.label-schema.vendor="Tarampampam" \
+    org.label-schema.schema-version="1.0"
 
 COPY --from=builder /tmp/http-proxy-daemon /bin/http-proxy-daemon
 
