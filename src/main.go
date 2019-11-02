@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-const VERSION = "0.0.1" // Do not forget update this value before new version releasing
+const VERSION = "0.0.3" // Do not forget update this value before new version releasing
 
 func main() {
 	var (
