@@ -47,7 +47,7 @@ shell: ## Start shell into container with golang
 
 image: ## Build docker image with app
 	$(DOCKER_BIN) build -f ./Dockerfile -t $(APP_NAME) .
-	$(DOCKER_BIN) run $(APP_NAME) /bin/app -V
+	$(DOCKER_BIN) run $(APP_NAME) -V
 
 clean: ## Make clean
 	$(DC_BIN) down -v -t 1
