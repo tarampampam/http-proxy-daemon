@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
@@ -15,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type IServer interface {
@@ -61,8 +62,8 @@ func NewServer(host string, port int, proxyPrefix string, stdLog, errLog *log.Lo
 			Transport: tr,
 			Timeout:   time.Second * 30, // Set request timeout
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				if len(via) >= 5 {
-					return errors.New("request: too many (5) redirects")
+				if len(via) >= 2 {
+					return errors.New("request: too many (2) redirects")
 				}
 				return nil
 			},

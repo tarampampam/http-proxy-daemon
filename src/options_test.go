@@ -2,13 +2,14 @@ package main
 
 import (
 	"errors"
-	"github.com/jessevdk/go-flags"
 	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/jessevdk/go-flags"
 )
 
 func TestOptions_StructTags(t *testing.T) {

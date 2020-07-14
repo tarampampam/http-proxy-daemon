@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
-	"github.com/jessevdk/go-flags"
 	"log"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/jessevdk/go-flags"
 )
 
 type Options struct {
