@@ -25,6 +25,15 @@ func TestOptions_Struct(t *testing.T) {
 			wantAlias:       "v",
 			wantDescription: "Display application version",
 		},
+		{
+			element: func() reflect.StructField {
+				field, _ := reflect.TypeOf(Root{}).FieldByName("Serve")
+				return field
+			},
+			wantCommand:     "serve",
+			wantAlias:       "s",
+			wantDescription: "Start proxy server",
+		},
 	}
 
 	for _, tt := range tests {

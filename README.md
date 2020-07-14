@@ -23,7 +23,7 @@ This application accepts HTTP requests and sending them by itself to the target 
 Run proxy server:
 
 ```bash
-$ ./http-proxy-daemon -l 0.0.0.0 -p 8080 -x 'proxy' &
+$ ./http-proxy-daemon serve --listen 0.0.0.0:8080 --prefix 'proxy' &
 2019/10/29 20:45:01.825260 Starting server on 0.0.0.0:8080
 ```
 
@@ -69,6 +69,12 @@ For application testing we use built-in golang testing feature and `docker-ce` +
 
 ```shell
 $ make test
+```
+
+Or build binary file:
+
+```shell
+$ make build
 ```
 
 ## Changes log

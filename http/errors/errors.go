@@ -1,4 +1,6 @@
-package main
+package errors
+
+import "encoding/json"
 
 // Server error for using in HTTP responses.
 type ServerError struct {
@@ -20,4 +22,12 @@ func NewServerError(code int, message string) *ServerError {
 // Get error message.
 func (e *ServerError) Error() string {
 	return e.Message
+}
+
+func (e *ServerError) ToJSON() []byte {
+	if marshaled, err := json.Marshal(e); err == nil {
+		return marshaled
+	}
+
+	return []byte(`{"error cannot be converted into JSON representation"}`)
 }
