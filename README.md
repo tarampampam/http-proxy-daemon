@@ -15,7 +15,7 @@
 This application accepts HTTP requests and sending them by itself to the target resource. So, target resource is not hardcoded, and by running this application on remote server you can use it as dynamic reverse-proxy:
 
 <p align="center">
-    <a href="https://asciinema.org/a/278217" target="_blank"><img src="https://asciinema.org/a/278217.svg" width="900"></a>
+    <a href="https://asciinema.org/a/347627" target="_blank"><img src="https://asciinema.org/a/347627.svg" width="900"></a>
 </p>
 
 ## Usage example
@@ -23,7 +23,7 @@ This application accepts HTTP requests and sending them by itself to the target 
 Run proxy server:
 
 ```bash
-$ ./http-proxy-daemon serve --listen 0.0.0.0:8080 --prefix 'proxy' &
+$ ./http-proxy-daemon serve --port 8080 --prefix 'proxy' &
 2019/10/29 20:45:01.825260 Starting server on 0.0.0.0:8080
 ```
 
@@ -54,7 +54,7 @@ $ curl -s -H "foo:bar" --user-agent "fake agent" 'http://127.0.0.1:8080/proxy/ht
 Run docker-container with proxy server in background _(detached)_ and listen for 8080 TCP port (incoming HTTP requests):
 
 ```bash
-$ docker run --rm -d -p 8080:8080 tarampampam/http-proxy-daemon serve --listen 0.0.0.0:8080
+$ docker run --rm -d -p "8080:8080/tcp" tarampampam/http-proxy-daemon serve --port 8080
 ```
 
 ### Supported tags
