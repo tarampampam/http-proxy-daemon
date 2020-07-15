@@ -41,7 +41,7 @@ func NewServer(settings *ServerSettings) *Server {
 		errLog     = log.New(os.Stderr, "[error] ", log.LstdFlags)
 		httpServer = &http.Server{
 			Addr:         settings.Address,
-			Handler:      handlers.LoggingHandler(os.Stdout, &router),
+			Handler:      handlers.CombinedLoggingHandler(os.Stdout, &router),
 			ErrorLog:     errLog,
 			WriteTimeout: settings.WriteTimeout,
 			ReadTimeout:  settings.ReadTimeout,
