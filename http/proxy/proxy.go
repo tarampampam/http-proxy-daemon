@@ -17,33 +17,27 @@ import (
 )
 
 type Handler struct {
-	counters counters.Counters
+	httpClient *http.Client
+	counters   counters.Counters
 }
 
-// HTTP request timeout
-const (
-	httpRequestTimeout time.Duration = time.Second * 30
-	maxRedirects       int           = 2
-)
-
-var httpClient = &http.Client{ //nolint:gochecknoglobals
-	Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true, //nolint:gosec
-		},
-	},
-	Timeout: httpRequestTimeout,
-	CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		if len(via) >= maxRedirects {
-			return errors.New("too many (" + strconv.Itoa(maxRedirects) + ") redirects")
-		}
-		return nil
-	},
-}
-
-func NewHandler(counters counters.Counters) http.Handler {
+func NewHandler(counters counters.Counters, httpRequestTimeout time.Duration, maxRedirects int) http.Handler {
 	return &Handler{
 		counters: counters,
+		httpClient: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true, //nolint:gosec //lgtm [go/disabled-certificate-check]
+				},
+			},
+			Timeout: httpRequestTimeout,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if len(via) >= maxRedirects {
+					return errors.New("too many (" + strconv.Itoa(maxRedirects) + ") redirects")
+				}
+				return nil
+			},
+		},
 	}
 }
 
@@ -90,7 +84,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) { //nolint:f
 	httpRequest.Header = r.Header.Clone()
 
 	// Make an http request
-	response, responseErr := httpClient.Do(httpRequest)
+	response, responseErr := h.httpClient.Do(httpRequest)
 
 	if responseErr != nil {
 		if e, ok := responseErr.(*url.Error); ok {

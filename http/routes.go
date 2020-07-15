@@ -8,6 +8,13 @@ import (
 	"http-proxy-daemon/http/proxy"
 	"net/http"
 	"strings"
+	"time"
+)
+
+// HTTP request timeout
+const (
+	httpRequestTimeout time.Duration = time.Second * 30
+	maxRedirects       int           = 2
 )
 
 // RegisterHandlers register server http handlers.
@@ -21,24 +28,24 @@ func (s *Server) RegisterHandlers() {
 		Name("index")
 
 	s.Router.
-		Handle("/metrics", DisableCachingMiddleware(metrics.NewHandler(&s.startTime, s.counters))).
-		Methods(http.MethodGet).
-		Name("metrics")
-
-	s.Router.
 		Handle("/ping", DisableCachingMiddleware(ping.NewHandler())).
 		Methods(http.MethodGet).
 		Name("ping")
 
 	s.Router.
+		Handle("/metrics", DisableCachingMiddleware(metrics.NewHandler(&s.startTime, s.counters))).
+		Methods(http.MethodGet).
+		Name("metrics")
+
+	s.Router.
 		Handle(
 			"/"+strings.TrimLeft(s.Settings.ProxyRoutePrefix+"/{uri:.*}", "/"),
-			proxy.NewHandler(s.counters),
+			proxy.NewHandler(s.counters, httpRequestTimeout, maxRedirects),
 		).
 		Methods(
 			http.MethodGet,
-			http.MethodPost,
 			http.MethodHead,
+			http.MethodPost,
 			http.MethodPut,
 			http.MethodPatch,
 			http.MethodDelete,
