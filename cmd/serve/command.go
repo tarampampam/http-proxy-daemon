@@ -17,11 +17,11 @@ import (
 
 const (
 	// gracefully shutdown timeout.
-	shutdownTimeout = time.Second * 3
+	shutdownTimeout = time.Second * 5
 
 	// HTTP read/write timeouts
-	httpReadTimeout  = time.Second * 15
-	httpWriteTimeout = time.Second * 15
+	httpReadTimeout  = time.Second * 3
+	httpWriteTimeout = time.Second * 3
 )
 
 type (
@@ -32,9 +32,10 @@ type (
 
 // Command is a `serve` command.
 type Command struct {
-	Address address `required:"true" short:"l" long:"listen" env:"LISTEN_ADDR" default:"0.0.0.0" description:"IP address to listen on"` //nolint:lll
-	Port    port    `required:"true" short:"p" long:"port" env:"LISTEN_PORT" default:"8080" description:"TCP port number"`              //nolint:lll
-	Prefix  prefix  `required:"true" short:"x" long:"prefix" env:"PROXY_PREFIX" default:"proxy" description:"Proxy route prefix"`       //nolint:lll
+	Address             address `required:"true" short:"l" long:"listen" env:"LISTEN_ADDR" default:"0.0.0.0" description:"IP address to listen on"`                      //nolint:lll
+	Port                port    `required:"true" short:"p" long:"port" env:"LISTEN_PORT" default:"8080" description:"TCP port number"`                                   //nolint:lll
+	Prefix              prefix  `required:"true" short:"x" long:"prefix" env:"PROXY_PREFIX" default:"proxy" description:"Proxy route prefix"`                            //nolint:lll
+	ProxyRequestTimeout uint8   `required:"true" long:"proxy-request-timeout" env:"PROXY_REQUEST_TIMEOUT" default:"30" description:"Proxy request timeout (in seconds)"` //nolint:lll     //nolint:lll
 }
 
 // Convert struct into string representation.
@@ -63,11 +64,12 @@ func (prefix) IsValidValue(prefix string) error {
 // Execute current command.
 func (cmd *Command) Execute(_ []string) error {
 	server := apphttp.NewServer(&apphttp.ServerSettings{
-		Address:          cmd.Address.String() + ":" + cmd.Port.String(),
-		ProxyRoutePrefix: cmd.Prefix.String(),
-		WriteTimeout:     httpWriteTimeout,
-		ReadTimeout:      httpReadTimeout,
-		KeepAliveEnabled: false,
+		Address:             cmd.Address.String() + ":" + cmd.Port.String(),
+		ProxyRoutePrefix:    cmd.Prefix.String(),
+		WriteTimeout:        httpWriteTimeout,
+		ReadTimeout:         httpReadTimeout,
+		ProxyRequestTimeout: time.Second * time.Duration(cmd.ProxyRequestTimeout),
+		KeepAliveEnabled:    false,
 	})
 
 	server.RegisterHandlers()

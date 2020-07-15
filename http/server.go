@@ -14,11 +14,12 @@ import (
 
 type (
 	ServerSettings struct {
-		Address          string // TCP address to listen on
-		ProxyRoutePrefix string
-		WriteTimeout     time.Duration
-		ReadTimeout      time.Duration
-		KeepAliveEnabled bool
+		Address             string // TCP address to listen on
+		ProxyRoutePrefix    string
+		WriteTimeout        time.Duration
+		ReadTimeout         time.Duration
+		ProxyRequestTimeout time.Duration
+		KeepAliveEnabled    bool
 	}
 
 	Server struct {

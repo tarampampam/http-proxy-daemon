@@ -8,13 +8,11 @@ import (
 	"http-proxy-daemon/http/proxy"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // HTTP request timeout
 const (
-	httpRequestTimeout time.Duration = time.Second * 30
-	maxRedirects       int           = 2
+	maxRedirects int = 2
 )
 
 // RegisterHandlers register server http handlers.
@@ -40,7 +38,7 @@ func (s *Server) RegisterHandlers() {
 	s.Router.
 		Handle(
 			"/"+strings.TrimLeft(s.settings.ProxyRoutePrefix+"/{uri:.*}", "/"),
-			proxy.NewHandler(s.counters, httpRequestTimeout, maxRedirects),
+			proxy.NewHandler(s.counters, s.settings.ProxyRequestTimeout, maxRedirects),
 		).
 		Methods(
 			http.MethodGet,
