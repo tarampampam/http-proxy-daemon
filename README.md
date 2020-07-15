@@ -57,6 +57,64 @@ Run docker-container with proxy server in background _(detached)_ and listen for
 $ docker run --rm -d -p "8080:8080/tcp" tarampampam/http-proxy-daemon serve --port 8080
 ```
 
+## Benchmark
+
+Start this application in docker-container:
+
+```bash
+$ docker run --rm --net host tarampampam/http-proxy-daemon:0.1.0 serve --port 8080
+```
+
+Start `nginx` beside:
+
+```bash
+$ docker run --rm --net host nginx:alpine
+```
+
+And run **Apache Benchmark**:
+
+```bash
+$ ab -kc 15 -t 90 'http://127.0.0.1:8080/proxy/http/127.0.0.1:80'
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+
+Server Software:        nginx/1.19.1
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /proxy/http/127.0.0.1:80
+Document Length:        612 bytes
+
+Concurrency Level:      15
+Time taken for tests:   12.065 seconds
+Complete requests:      50000
+Failed requests:        0
+Keep-Alive requests:    0
+Total transferred:      42900000 bytes
+HTML transferred:       30600000 bytes
+Requests per second:    4144.22 [#/sec] (mean)
+Time per request:       3.619 [ms] (mean)
+Time per request:       0.241 [ms] (mean, across all concurrent requests)
+Transfer rate:          3472.41 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       6
+Processing:     0    3   4.2      2     215
+Waiting:        0    3   3.9      1     211
+Total:          0    4   4.1      2     215
+
+Percentage of the requests served within a certain time (ms)
+  50%      2
+  66%      3
+  75%      4
+  80%      6
+  90%      9
+  95%     11
+  98%     15
+  99%     17
+ 100%    215 (longest request)
+```
+
 ### Supported tags
 
 [![image stats](https://dockeri.co/image/tarampampam/http-proxy-daemon)][link_docker_tags]
