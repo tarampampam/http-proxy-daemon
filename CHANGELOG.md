@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog][keepachangelog] and this project adheres to [Semantic Versioning][semver].
 
+## v0.1.0
+
+### Removed
+
+- TSL supports (options `--tsl-cert` and `--tsl-key`)
+
+### Added
+
+- Sub-command `version` (instead `-V` flag)
+
+### Changed
+
+- For server starting must be used sub-command `serve` (`./app serve --port 8080` instead `./app --port 8080`)
+- Docker image uses unprivileged user for application starting
+
 ## v0.0.3
 
 ### Fixed

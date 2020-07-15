@@ -4,12 +4,12 @@
 
 # Http Proxy Daemon
 
-![Release version][badge_release_version]
+[![Release version][badge_release_version]][link_releases]
 ![Project language][badge_language]
 [![Build Status][badge_build]][link_build]
+[![Release Status][badge_release]][link_build]
 [![Coverage][badge_coverage]][link_coverage]
 [![Go Report][badge_goreport]][link_goreport]
-[![Docker Build][badge_docker_build]][link_docker_hub]
 [![License][badge_license]][link_license]
 
 This application accepts HTTP requests and sending them by itself to the target resource. So, target resource is not hardcoded, and by running this application on remote server you can use it as dynamic reverse-proxy:
@@ -23,7 +23,7 @@ This application accepts HTTP requests and sending them by itself to the target 
 Run proxy server:
 
 ```bash
-$ ./http-proxy-daemon -l 0.0.0.0 -p 8080 -x 'proxy' &
+$ ./http-proxy-daemon serve --listen 0.0.0.0:8080 --prefix 'proxy' &
 2019/10/29 20:45:01.825260 Starting server on 0.0.0.0:8080
 ```
 
@@ -33,44 +33,35 @@ And then send an HTTP request to the `https://httpbin.org/get?foo=bar&bar&baz` t
 $ curl -s -H "foo:bar" --user-agent "fake agent" 'http://127.0.0.1:8080/proxy/https/httpbin.org/get?foo=bar&bar&baz'
 {
   "args": {
-    "bar": "", 
-    "baz": "", 
+    "bar": "",
+    "baz": "",
     "foo": "bar"
-  }, 
+  },
   "headers": {
-    "Accept": "*/*", 
-    "Accept-Encoding": "gzip", 
-    "Foo": "bar", 
-    "Host": "httpbin.org", 
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip",
+    "Foo": "bar",
+    "Host": "httpbin.org",
     "User-Agent": "fake agent"
-  }, 
-  "origin": "8.8.8.8, 1.1.1.1", 
+  },
+  "origin": "8.8.8.8, 1.1.1.1",
   "url": "https://httpbin.org/get?foo=bar&bar&baz"
 }
 ```
 
 ## Using docker
 
-Run docker-container with proxy server in background _(detached)_ and listen 8080 TCP port (for HTTP requests):
+Run docker-container with proxy server in background _(detached)_ and listen for 8080 TCP port (incoming HTTP requests):
 
 ```bash
-$ docker run --rm -d -p 8080:8080 tarampampam/http-proxy-daemon -p 8080
+$ docker run --rm -d -p 8080:8080 tarampampam/http-proxy-daemon serve --listen 0.0.0.0:8080
 ```
 
-Or, for example, 8443 TCP port (for HTTP**S** requests):
+### Supported tags
 
-```bash
-$ docker run --rm -d \
-    -p 8443:8443 \
-    -v "$(pwd)/server.key:/opt/server.key:ro" \
-    -v "$(pwd)/server.crt:/opt/server.crt:ro" \
-    -e 'LISTEN_ADDR=0.0.0.0' \
-    -e 'LISTEN_PORT=8443' \
-    -e 'PROXY_PREFIX=proxy' \
-    -e 'TSL_CERT=/opt/server.crt' \
-    -e 'TSL_KEY=/opt/server.key' \
-    tarampampam/http-proxy-daemon
-```
+[![image stats](https://dockeri.co/image/tarampampam/http-proxy-daemon)][link_docker_tags]
+
+All supported image tags [can be found here][link_docker_tags].
 
 ### Testing
 
@@ -78,6 +69,12 @@ For application testing we use built-in golang testing feature and `docker-ce` +
 
 ```shell
 $ make test
+```
+
+Or build binary file:
+
+```shell
+$ make build
 ```
 
 ## Changes log
@@ -98,22 +95,23 @@ If you will find any package errors, please, [make an issue][link_create_issue] 
 
 This is open-sourced software licensed under the [MIT License][link_license].
 
-[badge_build]:https://github.com/tarampampam/http-proxy-daemon/workflows/build/badge.svg
+[badge_build]:https://img.shields.io/github/workflow/status/tarampampam/http-proxy-daemon/tests?maxAge=30&logo=github
+[badge_release]:https://img.shields.io/github/workflow/status/tarampampam/http-proxy-daemon/release?maxAge=30&label=release&logo=github
 [badge_coverage]:https://img.shields.io/codecov/c/github/tarampampam/http-proxy-daemon/master.svg?maxAge=30
 [badge_goreport]:https://goreportcard.com/badge/github.com/tarampampam/http-proxy-daemon
 [badge_release_version]:https://img.shields.io/github/release/tarampampam/http-proxy-daemon.svg?maxAge=30
-[badge_docker_build]:https://img.shields.io/docker/cloud/build/tarampampam/http-proxy-daemon?maxAge=30&label=docker
 [badge_language]:https://img.shields.io/badge/language-go_1.13-blue.svg?longCache=true
 [badge_license]:https://img.shields.io/github/license/tarampampam/http-proxy-daemon.svg?longCache=true
 [badge_release_date]:https://img.shields.io/github/release-date/tarampampam/http-proxy-daemon.svg?maxAge=180
 [badge_commits_since_release]:https://img.shields.io/github/commits-since/tarampampam/http-proxy-daemon/latest.svg?maxAge=45
 [badge_issues]:https://img.shields.io/github/issues/tarampampam/http-proxy-daemon.svg?maxAge=45
 [badge_pulls]:https://img.shields.io/github/issues-pr/tarampampam/http-proxy-daemon.svg?maxAge=45
-[link_goreport]:https://goreportcard.com/report/github.com/tarampampam/http-proxy-daemon
 
+[link_goreport]:https://goreportcard.com/report/github.com/tarampampam/http-proxy-daemon
 [link_coverage]:https://codecov.io/gh/tarampampam/http-proxy-daemon
 [link_build]:https://github.com/tarampampam/http-proxy-daemon/actions
 [link_docker_hub]:https://hub.docker.com/r/tarampampam/http-proxy-daemon/
+[link_docker_tags]:https://hub.docker.com/r/tarampampam/http-proxy-daemon/tags
 [link_license]:https://github.com/tarampampam/http-proxy-daemon/blob/master/LICENSE
 [link_releases]:https://github.com/tarampampam/http-proxy-daemon/releases
 [link_commits]:https://github.com/tarampampam/http-proxy-daemon/commits
