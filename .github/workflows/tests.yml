@@ -112,8 +112,8 @@ jobs:
         run: /tmp/http-proxy-daemon serve --listen 0.0.0.0 --port 8080 --prefix "foobar" &
 
       - name: Send request using application
-        run: |
-          curl -v --fail http://127.0.0.1:8080/foobar/https/httpbin.org/json
+        if: matrix.os == 'linux'
+        run: curl -v --fail http://127.0.0.1:8080/foobar/https/httpbin.org/json
 
       - uses: actions/upload-artifact@v2
         with:
@@ -132,8 +132,7 @@ jobs:
         run: docker build -t image:local --build-arg "APP_VERSION=${GITHUB_SHA}" -f ./Dockerfile .
 
       - name: Run image
-        run: docker run --rm -d image:local serve --listen 0.0.0.0 --port 8080 --prefix "foobar"
+        run: docker run --rm -d -p "8080:8080"image:local serve --listen 0.0.0.0 --port 8080 --prefix "foobar"
 
       - name: Send request using application in container
-        run: |
-          curl -v --fail http://127.0.0.1:8080/foobar/https/httpbin.org/json
+        run: curl -v --fail http://127.0.0.1:8080/foobar/https/httpbin.org/json
