@@ -22,7 +22,7 @@ type (
 	}
 
 	Server struct {
-		Settings  *ServerSettings
+		settings  *ServerSettings
 		Server    *http.Server
 		Router    *mux.Router
 		startTime time.Time
@@ -50,7 +50,7 @@ func NewServer(settings *ServerSettings) *Server {
 	httpServer.SetKeepAlivesEnabled(settings.KeepAliveEnabled)
 
 	return &Server{
-		Settings: settings,
+		settings: settings,
 		Server:   httpServer,
 		Router:   &router,
 		counters: counters.NewInMemoryCounters(nil),

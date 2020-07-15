@@ -32,9 +32,9 @@ type (
 
 // Command is a `serve` command.
 type Command struct {
-	Address address `short:"l" long:"listen" env:"LISTEN_ADDR" default:"0.0.0.0" description:"IP address to listen on"`
-	Port    port    `short:"p" long:"port" env:"LISTEN_PORT" default:"8080" description:"TCP port number"`
-	Prefix  prefix  `short:"x" long:"prefix" env:"PROXY_PREFIX" default:"proxy" description:"Proxy route prefix"`
+	Address address `required:"true" short:"l" long:"listen" env:"LISTEN_ADDR" default:"0.0.0.0" description:"IP address to listen on"` //nolint:lll
+	Port    port    `required:"true" short:"p" long:"port" env:"LISTEN_PORT" default:"8080" description:"TCP port number"`              //nolint:lll
+	Prefix  prefix  `required:"true" short:"x" long:"prefix" env:"PROXY_PREFIX" default:"proxy" description:"Proxy route prefix"`       //nolint:lll
 }
 
 // Convert struct into string representation.

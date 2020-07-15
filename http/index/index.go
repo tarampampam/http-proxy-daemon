@@ -19,7 +19,7 @@ func NewHandler(router *mux.Router) http.Handler {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	var routes []string
+	routes := make([]string, 0)
 
 	// walk through all available routes an fill routes slice
 	err := h.router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
@@ -35,6 +35,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 
 	// handle possible error
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write(errors.NewServerError(http.StatusInternalServerError, err.Error()).ToJSON())
 

@@ -39,7 +39,7 @@ func (s *Server) RegisterHandlers() {
 
 	s.Router.
 		Handle(
-			"/"+strings.TrimLeft(s.Settings.ProxyRoutePrefix+"/{uri:.*}", "/"),
+			"/"+strings.TrimLeft(s.settings.ProxyRoutePrefix+"/{uri:.*}", "/"),
 			proxy.NewHandler(s.counters, httpRequestTimeout, maxRedirects),
 		).
 		Methods(

@@ -25,6 +25,7 @@ func TestNewServerError(t *testing.T) {
 		assert.True(t, got.IsError)
 		assert.Equal(t, tt.code, got.Code)
 		assert.Equal(t, tt.message, got.Message)
+		assert.Equal(t, tt.message, got.Error())
 	}
 }
 
@@ -41,4 +42,5 @@ func TestServerError_JsonCasting(t *testing.T) {
 	asJSON, _ := json.Marshal(err)
 
 	assert.JSONEq(t, `{"code":123,"error":true,"message":"foo"}`, string(asJSON))
+	assert.JSONEq(t, `{"code":123,"error":true,"message":"foo"}`, string(err.ToJSON()))
 }
