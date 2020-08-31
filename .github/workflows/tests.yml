@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '**.md'
     tags-ignore:
       - '**'
   pull_request:
+    paths-ignore:
+      - '**.md'
 
 jobs:
   gofmt:
@@ -76,7 +80,7 @@ jobs:
 
       - name: Upload Coverage report to CodeCov
         continue-on-error: true
-        uses: codecov/codecov-action@v1.0.12 # https://github.com/codecov/codecov-action
+        uses: codecov/codecov-action@v1.0.13 # https://github.com/codecov/codecov-action
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: /tmp/coverage.txt
@@ -133,6 +137,9 @@ jobs:
 
       - name: Run image
         run: docker run --rm -d -p "8080:8080/tcp" image:local serve --listen 0.0.0.0 --port 8080 --prefix "foobar"
+
+      - name: Sleep
+        run: sleep 2
 
       - name: Send request using application in container
         run: curl -v --fail http://127.0.0.1:8080/foobar/https/httpbin.org/json
