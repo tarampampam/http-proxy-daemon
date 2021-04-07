@@ -13,6 +13,10 @@
 
 This application allows sending any HTTP requests throughout itself (proxying) using dynamic HTTP route, like `http://app/proxy/https/example.com/file.json?any=param` (request will be sent on `https://example.com/file.json?any=param`). By running this application on a remote server you can send requests to any resources "like from a server" from anywhere!
 
+## Installing
+
+Download the latest binary file for your os/arch from [releases page][link_releases] or use our [docker image][link_docker_hub] ([ghcr.io][link_ghcr]).
+
 ## Usage example
 
 Run proxy server:
@@ -46,6 +50,8 @@ $ curl -s -H "foo:bar" --user-agent "fake agent" 'http://127.0.0.1:8080/proxy/ht
 ## Using docker
 
 [![image stats](https://dockeri.co/image/tarampampam/http-proxy-daemon)][link_docker_tags]
+
+> All supported image tags [can be found here][link_docker_hub] and [here][link_ghcr].
 
 Run docker-container with a proxy server in background _(detached)_ and listen for 8080 TCP port (incoming HTTP requests):
 
@@ -145,13 +151,6 @@ Percentage of the requests served within a certain time (ms)
 > MemTotal:       16261464 kB
 > ```
 
-
-### Supported tags
-
-[![image stats](https://dockeri.co/image/tarampampam/http-proxy-daemon)][link_docker_tags]
-
-All supported image tags [can be found here][link_docker_tags].
-
 ### Testing
 
 For application testing we use built-in golang testing feature and `docker-ce` + `docker-compose` as develop environment. So, just write into your terminal after repository cloning:
@@ -206,3 +205,4 @@ This is open-sourced software licensed under the [MIT License][link_license].
 [link_issues]:https://github.com/tarampampam/http-proxy-daemon/issues
 [link_create_issue]:https://github.com/tarampampam/http-proxy-daemon/issues/new/choose
 [link_pulls]:https://github.com/tarampampam/http-proxy-daemon/pulls
+[link_ghcr]:https://github.com/users/tarampampam/packages/container/package/webhook-tester
