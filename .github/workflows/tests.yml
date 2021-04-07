@@ -132,9 +132,6 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [build]
     steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
       - name: Download compiled binary file
         uses: actions/download-artifact@v2
         with:
@@ -159,6 +156,9 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [golangci-lint, go-test]
     steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
       - name: Generate version value
         id: version # for PR this value will be `merge@__hash__`, SO: <https://stackoverflow.com/a/59780579/2252921>
         run: echo "::set-output name=value::`echo ${GITHUB_REF##*/} | sed -e 's/^[vV ]*//'`@`echo ${GITHUB_SHA} | cut -c1-8`"
