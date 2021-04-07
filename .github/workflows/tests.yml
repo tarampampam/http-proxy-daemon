@@ -209,7 +209,7 @@ jobs:
         run: |
           docker run --rm -d \
             -p "8081:8081/tcp" \
-            -e "LISTEN_ADDR=127.0.0.1" \
+            -e "LISTEN_ADDR=0.0.0.0" \
             -e "LISTEN_PORT=8081" \
             -e "PROXY_PREFIX=foobar" \
             -e "PROXY_REQUEST_TIMEOUT=15s" \
