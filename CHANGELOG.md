@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog][keepachangelog] and this project adher
 ### Changed
 
 - Golang updated from `1.15` up to `1.16.3`
+- TODO describe changes
 
 ## v0.2.0
 

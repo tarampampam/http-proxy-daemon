@@ -20,6 +20,8 @@ This application accepts HTTP requests and sending them by itself to the target 
 
 ## Usage example
 
+_WIP_ // TODO describe
+
 Run proxy server:
 
 ```bash
