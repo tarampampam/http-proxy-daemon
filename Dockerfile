@@ -1,5 +1,7 @@
+# syntax=docker/dockerfile:1.2
+
 # Image page: <https://hub.docker.com/_/golang>
-FROM golang:1.16.3-alpine as builder
+FROM --platform=${TARGETPLATFORM:-linux/amd64} golang:1.16.3-alpine as builder
 
 # can be passed with any prefix (like `v1.2.3@GITHASH`)
 # e.g.: `docker build --build-arg "APP_VERSION=v1.2.3@GITHASH" .`
@@ -8,60 +10,64 @@ ARG APP_VERSION="undefined@docker"
 RUN set -x \
     && mkdir /src \
     # SSL ca certificates (ca-certificates is required to call HTTPS endpoints)
-    && apk add --no-cache ca-certificates upx \
+    && apk add --no-cache ca-certificates \
     && update-ca-certificates
 
 WORKDIR /src
 
-COPY ./go.mod ./go.sum ./
-
-# Burn modules cache
-RUN set -x \
-    && go version \
-    && go mod download \
-    && go mod verify
-
 COPY . /src
 
+# arguments to pass on each go tool link invocation
+ENV LDFLAGS="-s -w -X github.com/tarampampam/http-proxy-daemon/internal/pkg/version.version=$APP_VERSION"
+
 RUN set -x \
-    && upx -V \
     && go version \
-    && GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X http-proxy-daemon/version.version=${APP_VERSION}" -o /tmp/http-proxy-daemon . \
-    && upx -7 /tmp/http-proxy-daemon \
+    && CGO_ENABLED=0 go build -trimpath -ldflags "$LDFLAGS" -o /tmp/http-proxy-daemon ./cmd/http-proxy-daemon/ \
     && /tmp/http-proxy-daemon version \
     && /tmp/http-proxy-daemon -h
 
-# Image page: <https://hub.docker.com/_/alpine>
-FROM alpine:latest as runtime
+# prepare rootfs for runtime
+RUN mkdir -p /tmp/rootfs
+
+WORKDIR /tmp/rootfs
+
+RUN set -x \
+    && mkdir -p \
+        ./etc/ssl \
+        ./bin \
+    && cp -R /etc/ssl/certs ./etc/ssl/certs \
+    && echo 'appuser:x:10001:10001::/nonexistent:/sbin/nologin' > ./etc/passwd \
+    && echo 'appuser:x:10001:' > ./etc/group \
+    && mv /tmp/http-proxy-daemon ./bin/http-proxy-daemon
+
+# use empty filesystem
+FROM scratch
 
 ARG APP_VERSION="undefined@docker"
 
 LABEL \
-    org.label-schema.name="http-proxy-daemon" \
-    org.label-schema.description="Docker image with http proxy daemon" \
-    org.label-schema.url="https://github.com/tarampampam/http-proxy-daemon" \
-    org.label-schema.vcs-url="https://github.com/tarampampam/http-proxy-daemon" \
-    org.label-schema.vendor="tarampampam" \
-    org.label-schema.license="MIT" \
-    org.label-schema.version="$APP_VERSION" \
-    org.label-schema.schema-version="1.0"
+    # Docs: <https://github.com/opencontainers/image-spec/blob/master/annotations.md>
+    org.opencontainers.image.title="http-proxy-daemon" \
+    org.opencontainers.image.description="Docker image with HTTP proxy daemon" \
+    org.opencontainers.image.url="https://github.com/tarampampam/http-proxy-daemon" \
+    org.opencontainers.image.source="https://github.com/tarampampam/http-proxy-daemon" \
+    org.opencontainers.image.vendor="tarampampam" \
+    org.opencontainers.version="$APP_VERSION" \
+    org.opencontainers.image.licenses="MIT"
 
-RUN set -x \
-    # Unprivileged user creation <https://stackoverflow.com/a/55757473/12429735RUN>
-    && adduser \
-        --disabled-password \
-        --gecos "" \
-        --home "/nonexistent" \
-        --shell "/sbin/nologin" \
-        --no-create-home \
-        --uid "10001" \
-        "appuser"
+# Import from builder
+COPY --from=builder /tmp/rootfs /
 
 # Use an unprivileged user
 USER appuser:appuser
 
-# Import from builder
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /tmp/http-proxy-daemon /bin/http-proxy-daemon
+# Docs: <https://docs.docker.com/engine/reference/builder/#healthcheck>
+HEALTHCHECK --interval=15s --timeout=3s --start-period=1s CMD [ \
+    "/bin/http-proxy-daemon", "healthcheck", \
+    "--log-json", \
+    "--port", "8080" \
+]
 
 ENTRYPOINT ["/bin/http-proxy-daemon"]
+
+CMD ["serve", "--log-json"]

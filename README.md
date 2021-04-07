@@ -9,25 +9,19 @@
 [![Build Status][badge_build]][link_build]
 [![Release Status][badge_release]][link_build]
 [![Coverage][badge_coverage]][link_coverage]
-[![Go Report][badge_goreport]][link_goreport]
 [![License][badge_license]][link_license]
 
-This application accepts HTTP requests and sending them by itself to the target resource. So, target resource is not hardcoded, and by running this application on remote server you can use it as dynamic reverse-proxy:
-
-<p align="center">
-    <a href="https://asciinema.org/a/347627" target="_blank"><img src="https://asciinema.org/a/347627.svg" width="900"></a>
-</p>
+This application allows sending any HTTP requests throughout itself (proxying) using dynamic HTTP route, like `http://app/proxy/https/example.com/file.json?any=param` (request will be sent on `https://example.com/file.json?any=param`). By running this application on a remote server you can send requests to any resources "like from a server" from anywhere!
 
 ## Usage example
 
 Run proxy server:
 
-```bash
-$ ./http-proxy-daemon serve --port 8080 --prefix 'proxy' &
-2019/10/29 20:45:01.825260 Starting server on 0.0.0.0:8080
+```shell
+$ ./http-proxy-daemon serve --port 8080 --prefix 'proxy'
 ```
 
-And then send an HTTP request to the `https://httpbin.org/get?foo=bar&bar&baz` through our server:
+Then send an HTTP request to the `https://httpbin.org/get?foo=bar&bar&baz` through our server:
 
 ```bash
 $ curl -s -H "foo:bar" --user-agent "fake agent" 'http://127.0.0.1:8080/proxy/https/httpbin.org/get?foo=bar&bar&baz'
@@ -51,18 +45,22 @@ $ curl -s -H "foo:bar" --user-agent "fake agent" 'http://127.0.0.1:8080/proxy/ht
 
 ## Using docker
 
-Run docker-container with proxy server in background _(detached)_ and listen for 8080 TCP port (incoming HTTP requests):
+[![image stats](https://dockeri.co/image/tarampampam/http-proxy-daemon)][link_docker_tags]
+
+Run docker-container with a proxy server in background _(detached)_ and listen for 8080 TCP port (incoming HTTP requests):
 
 ```bash
 $ docker run --rm -d -p "8080:8080/tcp" tarampampam/http-proxy-daemon serve --port 8080
 ```
 
+> Important notice: do **not** use `latest` application tag _(this is bad practice)_. Use versioned tag (like `1.2.3`) instead.
+
 ## Benchmark
 
-Start this application in docker-container:
+Start this application in a docker-container:
 
 ```bash
-$ docker run --rm --net host tarampampam/http-proxy-daemon:0.1.0 serve --port 8080
+$ docker run --rm --net host tarampampam/http-proxy-daemon:0.3.0 serve --port 8080
 ```
 
 Start `nginx` beside:
@@ -71,13 +69,29 @@ Start `nginx` beside:
 $ docker run --rm --net host nginx:alpine
 ```
 
-And run **Apache Benchmark**:
+Next, run **Apache Benchmark**:
 
 ```bash
 $ ab -kc 15 -t 90 'http://127.0.0.1:8080/proxy/http/127.0.0.1:80'
-This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+This is ApacheBench, Version 2.3 <$Revision: 1843412 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
 
-Server Software:        nginx/1.19.1
+Benchmarking 127.0.0.1 (be patient)
+Completed 5000 requests
+Completed 10000 requests
+Completed 15000 requests
+Completed 20000 requests
+Completed 25000 requests
+Completed 30000 requests
+Completed 35000 requests
+Completed 40000 requests
+Completed 45000 requests
+Completed 50000 requests
+Finished 50000 requests
+
+
+Server Software:        nginx/1.19.9
 Server Hostname:        127.0.0.1
 Server Port:            8080
 
@@ -85,35 +99,52 @@ Document Path:          /proxy/http/127.0.0.1:80
 Document Length:        612 bytes
 
 Concurrency Level:      15
-Time taken for tests:   12.065 seconds
+Time taken for tests:   7.469 seconds
 Complete requests:      50000
 Failed requests:        0
-Keep-Alive requests:    0
-Total transferred:      42900000 bytes
+Keep-Alive requests:    50000
+Total transferred:      44100000 bytes
 HTML transferred:       30600000 bytes
-Requests per second:    4144.22 [#/sec] (mean)
-Time per request:       3.619 [ms] (mean)
-Time per request:       0.241 [ms] (mean, across all concurrent requests)
-Transfer rate:          3472.41 [Kbytes/sec] received
+Requests per second:    6694.38 [#/sec] (mean)
+Time per request:       2.241 [ms] (mean)
+Time per request:       0.149 [ms] (mean, across all concurrent requests)
+Transfer rate:          5766.06 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.2      0       6
-Processing:     0    3   4.2      2     215
-Waiting:        0    3   3.9      1     211
-Total:          0    4   4.1      2     215
+Connect:        0    0   0.0      0       0
+Processing:     0    2  14.1      1     371
+Waiting:        0    2  14.1      1     371
+Total:          0    2  14.1      1     371
 
 Percentage of the requests served within a certain time (ms)
-  50%      2
-  66%      3
-  75%      4
-  80%      6
-  90%      9
-  95%     11
-  98%     15
-  99%     17
- 100%    215 (longest request)
+  50%      1
+  66%      2
+  75%      2
+  80%      2
+  90%      3
+  95%      5
+  98%      6
+  99%      7
+ 100%    371 (longest request)
 ```
+
+> Hardware info:
+> ```shell
+> $ cat /proc/cpuinfo | grep 'model name'
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+> model name	: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+>
+> $ cat /proc/meminfo | grep 'MemTotal'
+> MemTotal:       16261464 kB
+> ```
+
 
 ### Supported tags
 
@@ -156,7 +187,6 @@ This is open-sourced software licensed under the [MIT License][link_license].
 [badge_build]:https://img.shields.io/github/workflow/status/tarampampam/http-proxy-daemon/tests?maxAge=30&logo=github
 [badge_release]:https://img.shields.io/github/workflow/status/tarampampam/http-proxy-daemon/release?maxAge=30&label=release&logo=github
 [badge_coverage]:https://img.shields.io/codecov/c/github/tarampampam/http-proxy-daemon/master.svg?maxAge=30
-[badge_goreport]:https://goreportcard.com/badge/github.com/tarampampam/http-proxy-daemon
 [badge_release_version]:https://img.shields.io/github/release/tarampampam/http-proxy-daemon.svg?maxAge=30
 [badge_language]:https://img.shields.io/github/go-mod/go-version/tarampampam/http-proxy-daemon?longCache=true
 [badge_license]:https://img.shields.io/github/license/tarampampam/http-proxy-daemon.svg?longCache=true
@@ -165,7 +195,6 @@ This is open-sourced software licensed under the [MIT License][link_license].
 [badge_issues]:https://img.shields.io/github/issues/tarampampam/http-proxy-daemon.svg?maxAge=45
 [badge_pulls]:https://img.shields.io/github/issues-pr/tarampampam/http-proxy-daemon.svg?maxAge=45
 
-[link_goreport]:https://goreportcard.com/report/github.com/tarampampam/http-proxy-daemon
 [link_coverage]:https://codecov.io/gh/tarampampam/http-proxy-daemon
 [link_build]:https://github.com/tarampampam/http-proxy-daemon/actions
 [link_docker_hub]:https://hub.docker.com/r/tarampampam/http-proxy-daemon/
