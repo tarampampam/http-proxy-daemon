@@ -50,7 +50,7 @@ $ curl -s -H "foo:bar" --user-agent "fake agent" 'http://127.0.0.1:8080/proxy/ht
 Run docker-container with a proxy server in background _(detached)_ and listen for 8080 TCP port (incoming HTTP requests):
 
 ```bash
-$ docker run --rm -d -p "8080:8080/tcp" tarampampam/http-proxy-daemon serve --port 8080
+$ docker run --rm -d -p "8080:8080/tcp" tarampampam/http-proxy-daemon:X.X.X serve --port 8080
 ```
 
 > Important notice: do **not** use `latest` application tag _(this is bad practice)_. Use versioned tag (like `1.2.3`) instead.
