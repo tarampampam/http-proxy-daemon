@@ -53,7 +53,7 @@ func (f *flags) init(flagSet *pflag.FlagSet) {
 		"proxy-request-timeout",
 		"",
 		time.Second*30, //nolint:gomnd
-		fmt.Sprintf("Proxy request timeout [$%s]", env.ProxyRequestTimeout),
+		fmt.Sprintf("Proxy request timeout (examples: 5s, 15s30ms) [$%s]", env.ProxyRequestTimeout),
 	)
 }
 

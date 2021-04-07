@@ -4,12 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog][keepachangelog] and this project adheres to [Semantic Versioning][semver].
 
-## UNRELEASED
+## v0.3.0
 
 ### Changed
 
 - Golang updated from `1.15` up to `1.16.3`
-- TODO describe changes
+- Module name changed from `http-proxy-daemon` to `github.com/tarampampam/http-proxy-daemon`
+- Docker image based on `scratch` (instead `alpine` image)
+- Logging using `uber-go/zap` package
+- HTTP route `/` now outputs HTML-page with basic info
+- HTTP errors now in plain text (instead `json`)
+- HTTP route `/metrics` generates metrics in [prometheus](https://github.com/prometheus) format
+- `--proxy-request-timeout` flag (`serve` sub-command) now accepts string value (examples: `5s`, `15s30ms`) instead count of seconds
+
+### Added
+
+- Support for `linux/arm64`, `linux/arm/v6` and `linux/arm/v7` platforms for docker image
+- Sub-command `healthcheck` (hidden in CLI help) that makes a simple HTTP request (with user-agent `HealthChecker/internal`) to the `http://127.0.0.1:8080/live` endpoint. Port number can be changed using `--port`, `-p` flag or `LISTEN_PORT` environment variable
+- Healthcheck in dockerfile
+- Global (available for all sub-commands) flags:
+  - `--log-json` for logging using JSON format (`stderr`)
+  - `--debug` for debug information for logging messages
+  - `--verbose` for verbose output
+- HTTP panics logging middleware
+
+### Removed
+
+- Binary file packing using `upx`
+- HTTP route `/ping`
 
 ## v0.2.0
 
