@@ -205,4 +205,4 @@ This is open-sourced software licensed under the [MIT License][link_license].
 [link_issues]:https://github.com/tarampampam/http-proxy-daemon/issues
 [link_create_issue]:https://github.com/tarampampam/http-proxy-daemon/issues/new/choose
 [link_pulls]:https://github.com/tarampampam/http-proxy-daemon/pulls
-[link_ghcr]:https://github.com/users/tarampampam/packages/container/package/webhook-tester
+[link_ghcr]:https://github.com/users/tarampampam/packages/container/package/http-proxy-daemon
