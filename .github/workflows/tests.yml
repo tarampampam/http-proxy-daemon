@@ -175,7 +175,7 @@ jobs:
         run: docker run --rm http-proxy-daemon:local version
 
       - name: Scan image
-        uses: anchore/scan-action@v2 # action page: <https://github.com/anchore/scan-action>
+        uses: anchore/scan-action@v3 # action page: <https://github.com/anchore/scan-action>
         with:
           image: http-proxy-daemon:local
           fail-build: true
