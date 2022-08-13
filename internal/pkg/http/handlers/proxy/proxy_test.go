@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/http/handlers/proxy"
 )
 

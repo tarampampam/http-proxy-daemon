@@ -12,8 +12,9 @@ import (
 	"github.com/kami-zh/go-capturer"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"github.com/tarampampam/http-proxy-daemon/internal/pkg/cli/serve"
 	"go.uber.org/zap"
+
+	"github.com/tarampampam/http-proxy-daemon/internal/pkg/cli/serve"
 )
 
 func TestProperties(t *testing.T) {

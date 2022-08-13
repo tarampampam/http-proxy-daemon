@@ -8,12 +8,13 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
+
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/config"
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/http/handlers"
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/http/middlewares/logreq"
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/http/middlewares/panic"
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/metrics"
-	"go.uber.org/zap"
 )
 
 type (

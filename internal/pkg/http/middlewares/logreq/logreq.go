@@ -6,8 +6,9 @@ import (
 
 	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
-	"github.com/tarampampam/http-proxy-daemon/internal/pkg/realip"
 	"go.uber.org/zap"
+
+	"github.com/tarampampam/http-proxy-daemon/internal/pkg/realip"
 )
 
 // New creates mux.MiddlewareFunc for HTTP requests logging using "zap" package.

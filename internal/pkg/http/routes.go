@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/checkers"
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/config"
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/http/handlers/healthz"

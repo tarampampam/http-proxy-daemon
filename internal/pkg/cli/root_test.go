@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/cli"
 )
 

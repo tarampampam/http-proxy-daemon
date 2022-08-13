@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/checkers"
 )
 

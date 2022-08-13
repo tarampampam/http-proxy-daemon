@@ -9,8 +9,9 @@ import (
 
 	"github.com/kami-zh/go-capturer"
 	"github.com/stretchr/testify/assert"
-	"github.com/tarampampam/http-proxy-daemon/internal/pkg/http/middlewares/logreq"
 	"go.uber.org/zap"
+
+	"github.com/tarampampam/http-proxy-daemon/internal/pkg/http/middlewares/logreq"
 )
 
 func TestMiddleware(t *testing.T) {

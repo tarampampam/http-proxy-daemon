@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
+
 	"github.com/tarampampam/http-proxy-daemon/internal/pkg/cli"
 )
 

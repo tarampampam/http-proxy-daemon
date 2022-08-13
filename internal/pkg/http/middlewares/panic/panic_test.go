@@ -9,8 +9,9 @@ import (
 
 	"github.com/kami-zh/go-capturer"
 	"github.com/stretchr/testify/assert"
-	panicMiddleware "github.com/tarampampam/http-proxy-daemon/internal/pkg/http/middlewares/panic"
 	"go.uber.org/zap"
+
+	panicMiddleware "github.com/tarampampam/http-proxy-daemon/internal/pkg/http/middlewares/panic"
 )
 
 func TestMiddleware(t *testing.T) {
