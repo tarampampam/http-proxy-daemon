@@ -20,13 +20,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18.0
+          go-version: 1.19
 
       - name: Check out code
         uses: actions/checkout@v3
 
-      - uses: gacts/github-slug@v1
-        id: slug
+      - {uses: gacts/github-slug@v1, id: slug}
 
       - name: Generate builder values
         id: values
@@ -56,8 +55,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - uses: gacts/github-slug@v1
-        id: slug
+      - {uses: gacts/github-slug@v1, id: slug}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2 # Action page: <https://github.com/docker/setup-qemu-action>
@@ -76,7 +74,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PASSWORD }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/build-push-action@v3 # Action page: <https://github.com/docker/build-push-action>
         with:

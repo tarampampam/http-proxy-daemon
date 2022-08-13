@@ -35,10 +35,11 @@ func NewServer(log *zap.Logger) *Server {
 	var (
 		router     = mux.NewRouter()
 		httpServer = &http.Server{
-			Handler:      router,
-			ErrorLog:     zap.NewStdLog(log),
-			ReadTimeout:  readTimeout,
-			WriteTimeout: writeTimeout,
+			Handler:           router,
+			ErrorLog:          zap.NewStdLog(log),
+			ReadTimeout:       readTimeout,
+			WriteTimeout:      writeTimeout,
+			ReadHeaderTimeout: readTimeout,
 		}
 	)
 

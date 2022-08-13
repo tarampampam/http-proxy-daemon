@@ -13,13 +13,11 @@ jobs:
     name: Gitleaks
     runs-on: ubuntu-20.04
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v3
+        with: {fetch-depth: 0}
 
       - name: Check for GitLeaks
-        uses: zricethezav/gitleaks-action@v1.6.0 # Action page: <https://github.com/zricethezav/gitleaks-action>
+        uses: gacts/gitleaks@v1 # Action page: <https://github.com/gacts/gitleaks>
 
   golangci-lint:
     name: Golang-CI (lint)
@@ -28,10 +26,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with: {go-version: 1.19}
+
       - name: Run linter
         uses: golangci/golangci-lint-action@v3 # Action page: <https://github.com/golangci/golangci-lint-action>
         with:
-          version: v1.38 # without patch version
+          version: v1.48 # without patch version
           only-new-issues: false # show only new issues if it's a pull request
 
   go-test:
@@ -40,8 +42,7 @@ jobs:
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
+        with: {go-version: 1.19}
 
       - name: Check out code
         uses: actions/checkout@v3
@@ -84,7 +85,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: 1.19
 
       - name: Check out code
         uses: actions/checkout@v3

@@ -4,11 +4,12 @@ version: '3.4'
 
 volumes:
   tmp-data:
-  golint-cache:
+  golint-go: {}
+  golint-cache: {}
 
 services:
   app: &app-service
-    image: golang:1.18.0-buster # Image page: <https://hub.docker.com/_/golang>
+    image: golang:1.19-buster # Image page: <https://hub.docker.com/_/golang>
     working_dir: /src
     environment:
       HOME: /tmp
@@ -26,11 +27,12 @@ services:
     command: go run ./cmd/http-proxy-daemon serve --verbose --port 8080
 
   golint:
-    image: golangci/golangci-lint:v1.39-alpine # Image page: <https://hub.docker.com/r/golangci/golangci-lint>
+    image: golangci/golangci-lint:v1.48-alpine # Image page: <https://hub.docker.com/r/golangci/golangci-lint>
     environment:
       GOLANGCI_LINT_CACHE: /tmp/golint # <https://github.com/golangci/golangci-lint/blob/v1.33.0/internal/cache/default.go#L68>
     volumes:
       - .:/src:ro
+      - golint-go:/go:rw # go dependencies will be downloaded on each run without this
       - golint-cache:/tmp/golint:rw
     working_dir: /src
     command: /bin/true

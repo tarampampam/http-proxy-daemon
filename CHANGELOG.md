@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog][keepachangelog] and this project adheres to [Semantic Versioning][semver].
 
+## v0.6.0
+
+### Changed
+
+- Go updated from `1.18` up to `1.19`
+
 ## v0.5.0
 
 ### Changed
