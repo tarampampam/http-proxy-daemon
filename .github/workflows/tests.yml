@@ -115,7 +115,7 @@ jobs:
         run: /tmp/http-proxy-daemon version && /tmp/http-proxy-daemon -h
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: http-proxy-daemon-${{ matrix.os }}-${{ matrix.arch }}
           path: /tmp/http-proxy-daemon
@@ -179,7 +179,7 @@ jobs:
         run: docker save http-proxy-daemon:local > ./docker-image.tar
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: docker-image
           path: ./docker-image.tar
