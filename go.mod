@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/fatih/color v1.13.0
-	github.com/felixge/httpsnoop v1.0.2
+	github.com/felixge/httpsnoop v1.0.3
 	github.com/gorilla/mux v1.8.0
 	github.com/kami-zh/go-capturer v0.0.0-20171211120116-e492ea43421d
 	github.com/prometheus/client_golang v1.12.1
